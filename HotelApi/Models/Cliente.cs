@@ -61,7 +61,7 @@ namespace HotelApi.Models
         [Required]
         public bool Activo { get; set; } = true;
         
-        // relación uno a muchos (un cliente puede tener muchos alquileres)
+        // relación uno a muchos (un cliente puede tener muchas reservas)
         //public List<Rent> Rents { get; set; }
     }
 }

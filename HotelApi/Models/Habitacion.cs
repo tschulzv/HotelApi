@@ -1,19 +1,29 @@
-﻿using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HotelApi.Models
 {
-    public class TipoDocumento
+    public class Habitacion
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // ids autoincrementados
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string Nombre { get; set; }
+        public int TipoHabitacionId{ get; set; }
+        public TipoHabitacion TipoHabitacion { get; set; }
 
+        [Required]
+        public decimal PrecioBase { get; set; }
+
+        [Required]
+        [Range(100,1000)]
+        public int NumeroHabitacion { get; set; }
+
+        [Required]
+        public bool Disponible { get; set; } = true;
+
+        // falta lo de tamaño y capacidad
 
         [Required]
         [DataType(DataType.Date)]
@@ -27,8 +37,5 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
-
-        // Propiedad de navegación inversa (colección)
-        public ICollection<Cliente> Clientes { get; set; }
     }
 }
