@@ -14,7 +14,7 @@ namespace HotelApi.Models
         public int ReservaId { get; set; }
         public Reserva Reserva { get; set; }
 
-        public int? HabitacionId { get; set; }  // nullable como en tu DB
+        public int? HabitacionId { get; set; } 
         public Habitacion Habitacion { get; set; }
 
         [Required]
@@ -26,8 +26,8 @@ namespace HotelApi.Models
         public int CantidadNinhos { get; set; }
 
         [Required]
-        public int PensionId { get; set; }  // suponiendo que tienes una tabla de pensiones
-        public Pension Pension { get; set; }  // propiedad de navegación
+        public int PensionId { get; set; }
+        public Pension Pension { get; set; }
 
         [Required]
         [DataType(DataType.Date)]
