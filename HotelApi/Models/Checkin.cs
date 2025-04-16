@@ -9,8 +9,9 @@ namespace HotelApi.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
         public int ReservaId { get; set; }
+
+        public Reserva Reserva { get; set; }
 
         [Required]
         public DateTime FechaCheckIn { get; set; }
@@ -23,5 +24,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+
+
     }
 }

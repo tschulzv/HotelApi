@@ -42,5 +42,7 @@ namespace HotelApi.Models
         public bool Activo { get; set; } = true;
 
         public ICollection<DetalleReserva> Detalles { get; set; }
+
+        public Checkin Checkin { get; set; }
     }
 }
