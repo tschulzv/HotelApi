@@ -1,0 +1,108 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HotelApi.Data;
+using HotelApi.Models;
+
+namespace HotelApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DetalleHuespedsController : ControllerBase
+    {
+        private readonly HotelApiContext _context;
+
+        public DetalleHuespedsController(HotelApiContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/DetalleHuespeds
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<DetalleHuesped>>> GetDetalleHuesped()
+        {
+            return await _context.DetalleHuesped.ToListAsync();
+        }
+
+        // GET: api/DetalleHuespeds/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<DetalleHuesped>> GetDetalleHuesped(int id)
+        {
+            var detalleHuesped = await _context.DetalleHuesped.FindAsync(id);
+
+            if (detalleHuesped == null)
+            {
+                return NotFound();
+            }
+
+            return detalleHuesped;
+        }
+
+        // PUT: api/DetalleHuespeds/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutDetalleHuesped(int id, DetalleHuesped detalleHuesped)
+        {
+            if (id != detalleHuesped.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(detalleHuesped).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!DetalleHuespedExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // POST: api/DetalleHuespeds
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<DetalleHuesped>> PostDetalleHuesped(DetalleHuesped detalleHuesped)
+        {
+            _context.DetalleHuesped.Add(detalleHuesped);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetDetalleHuesped", new { id = detalleHuesped.Id }, detalleHuesped);
+        }
+
+        // DELETE: api/DetalleHuespeds/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDetalleHuesped(int id)
+        {
+            var detalleHuesped = await _context.DetalleHuesped.FindAsync(id);
+            if (detalleHuesped == null)
+            {
+                return NotFound();
+            }
+
+            _context.DetalleHuesped.Remove(detalleHuesped);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool DetalleHuespedExists(int id)
+        {
+            return _context.DetalleHuesped.Any(e => e.Id == id);
+        }
+    }
+}
