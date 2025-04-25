@@ -23,14 +23,16 @@ namespace HotelApi.Controllers
 
         // GET: api/Reservas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Reserva>>> GetReserva()
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservas()
         {
-            return await _context.Reserva.ToListAsync();
+            var res = await _context.Reserva.ToListAsync();
+            var resDtos = res.Select(r => ToDTO(r));
+            return Ok(resDtos);
         }
 
         // GET: api/Reservas/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Reserva>> GetReserva(int id)
+        public async Task<ActionResult<ReservaDTO>> GetReserva(int id)
         {
             var reserva = await _context.Reserva.FindAsync(id);
 
@@ -39,20 +41,36 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return reserva;
+            return ToDTO(reserva);
         }
 
         // PUT: api/Reservas/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutReserva(int id, Reserva reserva)
+        public async Task<IActionResult> PutReserva(int id, ReservaDTO resDTO)
         {
-            if (id != reserva.Id)
+            if (id != resDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(reserva).State = EntityState.Modified;
+            var res = await _context.Reserva.FindAsync(id);
+
+            if (res == null)
+            {
+                return NotFound();
+            }
+
+            res.ClienteId = resDTO.ClienteId;
+            res.Codigo = resDTO.Codigo;
+            res.FechaIngreso = resDTO.FechaIngreso;
+            res.FechaSalida = resDTO.FechaSalida;
+            res.LlegadaEstimada = resDTO.LlegadaEstimada;
+            res.Comentarios = resDTO.Comentarios;
+            res.EstadoId = resDTO.EstadoId;
+            res.Actualizacion = DateTime.Now;
+
+            _context.Entry(res).State = EntityState.Modified;
 
             try
             {
@@ -76,12 +94,43 @@ namespace HotelApi.Controllers
         // POST: api/Reservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Reserva>> PostReserva(Reserva reserva)
+        public async Task<ActionResult<ReservaDTO>> PostReserva(ReservaDTO resDto)
         {
-            _context.Reserva.Add(reserva);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+            }
+            var res = new Reserva
+            {
+                ClienteId = resDto.ClienteId,
+                Codigo = resDto.Codigo,
+                FechaIngreso = resDto.FechaIngreso,
+                FechaSalida = resDto.FechaSalida,
+                LlegadaEstimada = resDto.LlegadaEstimada,
+                Comentarios = resDto.Comentarios,
+                EstadoId = resDto.EstadoId,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true,
+            };
+
+            if (resDto.Detalles != null)
+            {
+                res.Detalles = resDto.Detalles.Select(d => new DetalleReserva
+                {
+                    ReservaId = res.Id,
+                    HabitacionId = d.HabitacionId,
+                    CantidadAdultos = d.CantidadAdultos,
+                    CantidadNinhos = d.CantidadNinhos,
+                    PensionId = d.PensionId,
+                    Activo = d.Activo
+                }).ToList();
+            }
+
+            _context.Reserva.Add(res);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetReserva", new { id = reserva.Id }, reserva);
+            return CreatedAtAction("GetReserva", new { id = res.Id }, resDto);
         }
 
         // DELETE: api/Reservas/5
@@ -94,8 +143,26 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            _context.Reserva.Remove(reserva);
-            await _context.SaveChangesAsync();
+            reserva.Activo = false;
+            reserva.Actualizacion = DateTime.Now;
+
+            _context.Entry(reserva).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ReservaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
@@ -103,6 +170,31 @@ namespace HotelApi.Controllers
         private bool ReservaExists(int id)
         {
             return _context.Reserva.Any(e => e.Id == id);
+        }
+
+        private static ReservaDTO ToDTO(Reserva re)
+        {
+            return new ReservaDTO
+            {
+                Id = re.Id,
+                ClienteId = re.ClienteId,
+                Codigo = re.Codigo,
+                FechaIngreso = re.FechaIngreso,
+                FechaSalida = re.FechaSalida,
+                LlegadaEstimada = re.LlegadaEstimada,
+                Comentarios = re.Comentarios,
+                EstadoId = re.EstadoId,
+                Detalles = re.Detalles?.Select(d => new DetalleReservaDTO
+                {
+                    Id = d.Id,
+                    ReservaId = d.ReservaId,
+                    HabitacionId = d.HabitacionId,
+                    CantidadAdultos = d.CantidadAdultos,
+                    CantidadNinhos = d.CantidadNinhos,
+                    PensionId = d.PensionId,
+                    Activo = d.Activo
+                }).ToList()
+            };
         }
     }
 }

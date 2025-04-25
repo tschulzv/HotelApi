@@ -23,10 +23,14 @@ namespace HotelApi.Controllers
 
         // GET: api/Servicios
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Servicio>>> GetServicio()
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetServicios()
         {
-            return await _context.Servicio.ToListAsync();
+            var se = await _context.Servicio.ToListAsync();
+            var seDtos = se.Select(s => ToDTO(s));
+            return Ok(seDtos);
         }
+
+        // !!!!!!!!!!!!!! HASTA ACA ESTÁ HECHO  -----------------------------------------------
 
         // GET: api/Servicios/5
         [HttpGet("{id}")]
@@ -103,6 +107,16 @@ namespace HotelApi.Controllers
         private bool ServicioExists(int id)
         {
             return _context.Servicio.Any(e => e.Id == id);
+        }
+
+        private static ServicioDTO ToDTO(Servicio s)
+        {
+            return new ServicioDTO
+            {
+                Id = s.Id,
+                Nombre = s.Nombre,
+                IconName = s.IconName
+            };
         }
     }
 }
