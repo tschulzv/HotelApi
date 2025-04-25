@@ -13,8 +13,13 @@ namespace HotelApi.Models
         public int TipoSolicitudId { get; set; }
 
         public int? ReservaId { get; set; }
+
+        public Reserva? Reserva { get; set; }
         public int? CancelacionId { get; set; }
+
+        public Cancelacion? Cancelacion { get; set; }
         public int? ConsultaId { get; set; }
+        public Consulta? Consulta { get; set; }
 
         [Required]
         public bool EsLeida { get; set; }
@@ -27,5 +32,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+
+
     }
 }
