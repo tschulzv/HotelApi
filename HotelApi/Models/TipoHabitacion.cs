@@ -18,17 +18,21 @@ namespace HotelApi.Models
         public string Descripcion { get; set; }
 
         [Required]
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal PrecioBase { get; set; }
+
+        [Required]
         [Range(0, 1000)]
         public int CantidadDisponible {  get; set; }
 
         [Required]
         [DataType(DataType.Date)]
-        //[DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Creacion { get; set; }
 
         [Required]
         [DataType(DataType.Date)]
-        //[DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Actualizacion { get; set; }
 
         [Required]
@@ -36,6 +40,7 @@ namespace HotelApi.Models
 
         // Propiedad de navegación inversa (colección)
         public ICollection<Habitacion> Habitaciones { get; set; }
+        public ICollection<ImagenHabitacion> ImagenesHabitaciones { get; set; }
     }
 
 }

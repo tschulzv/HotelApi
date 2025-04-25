@@ -18,12 +18,14 @@ namespace HotelApi.Models
         public string Codigo { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaIngreso { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaSalida { get; set; }
 
-        public DateTime? LlegadaEstimada { get; set; }
+        public TimeOnly? LlegadaEstimada { get; set; }
 
         [StringLength(256)]
         public string Comentarios { get; set; }
@@ -33,9 +35,11 @@ namespace HotelApi.Models
         public EstadoReserva Estado { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Creacion { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Actualizacion { get; set; }
 
         [Required]

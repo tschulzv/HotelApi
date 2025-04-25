@@ -9,9 +9,6 @@ namespace HotelApi.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
-        public int TipoSolicitudId { get; set; }
-
         public int? ReservaId { get; set; }
 
         public Reserva? Reserva { get; set; }
@@ -25,9 +22,11 @@ namespace HotelApi.Models
         public bool EsLeida { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Creacion { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Actualizacion { get; set; }
 
         [Required]

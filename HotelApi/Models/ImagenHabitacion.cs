@@ -12,13 +12,17 @@ namespace HotelApi.Models
         [Required]
         public int TipoHabitacionId { get; set; }
 
+        public TipoHabitacion TipoHabitacion { get; set; }
+
         [Required]
         public byte[] Imagen { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Creacion { get; set; }
 
         [Required]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Actualizacion { get; set; }
 
         [Required]

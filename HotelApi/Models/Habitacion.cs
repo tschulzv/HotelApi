@@ -14,9 +14,6 @@ namespace HotelApi.Models
         public TipoHabitacion TipoHabitacion { get; set; }
 
         [Required]
-        public decimal PrecioBase { get; set; }
-
-        [Required]
         [Range(100,1000)]
         public int NumeroHabitacion { get; set; }
 
