@@ -10,9 +10,6 @@ namespace HotelApi.Models
         public int Id { get; set; }
 
         [Required]
-        public int TipoHabitacionId { get; set; }
-
-        [Required]
         [StringLength(50)]
         public string Nombre { get; set; }
 
@@ -26,5 +23,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+
+        public ICollection<TipoHabitacion> TipoHabitacion { get; set; }
     }
 }

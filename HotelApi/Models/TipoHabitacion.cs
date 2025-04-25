@@ -41,6 +41,7 @@ namespace HotelApi.Models
         // Propiedad de navegación inversa (colección)
         public ICollection<Habitacion> Habitaciones { get; set; }
         public ICollection<ImagenHabitacion> ImagenesHabitaciones { get; set; }
+        public ICollection<Servicio> Servicios { get; set; }
     }
 
 }
