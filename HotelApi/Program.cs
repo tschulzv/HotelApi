@@ -1,4 +1,9 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using HotelApi.Data;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<HotelApiContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("HotelApiContext") ?? throw new InvalidOperationException("Connection string 'HotelApiContext' not found.")));
 
 // Add services to the container.
 
