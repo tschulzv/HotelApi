@@ -23,14 +23,16 @@ namespace HotelApi.Controllers
 
         // GET: api/Cancelacions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Cancelacion>>> GetCancelacion()
+        public async Task<ActionResult<IEnumerable<CancelacionDTO>>> GetCancelacion()
         {
-            return await _context.Cancelacion.ToListAsync();
+            var cancelaciones = await _context.Cancelacion.ToListAsync();
+            var cancelacionDTOs = cancelaciones.Select(ca => ToDTO(ca));
+            return Ok(cancelacionDTOs);
         }
 
         // GET: api/Cancelacions/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Cancelacion>> GetCancelacion(int id)
+        public async Task<ActionResult<CancelacionDTO>> GetCancelacion(int id)
         {
             var cancelacion = await _context.Cancelacion.FindAsync(id);
 
@@ -39,20 +41,31 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return cancelacion;
+            return ToDTO(cancelacion);
         }
 
         // PUT: api/Cancelacions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCancelacion(int id, Cancelacion cancelacion)
+        public async Task<IActionResult> PutCancelacion(int id, CancelacionDTO caDto)
         {
-            if (id != cancelacion.Id)
+            if (id != caDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(cancelacion).State = EntityState.Modified;
+            var ca = await _context.Cancelacion.FindAsync(id);
+
+            if(ca == null)
+            {
+                return NotFound();
+            }
+            ca.Id = caDto.Id;
+            ca.DetalleReservaId = caDto.DetalleReservaId;
+            ca.Motivo = caDto.Motivo;
+            ca.Activo = caDto.Activo;
+
+            _context.Entry(ca).State = EntityState.Modified;
 
             try
             {
@@ -76,12 +89,23 @@ namespace HotelApi.Controllers
         // POST: api/Cancelacions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Cancelacion>> PostCancelacion(Cancelacion cancelacion)
+        public async Task<ActionResult<Cancelacion>> PostCancelacion(CancelacionDTO caDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var cancelacion = new Cancelacion {
+                DetalleReservaId = caDto.DetalleReservaId,
+                Motivo = caDto.Motivo,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
             _context.Cancelacion.Add(cancelacion);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCancelacion", new { id = cancelacion.Id }, cancelacion);
+            return CreatedAtAction("GetCancelacion", new { id = cancelacion.Id }, caDto);
         }
 
         // DELETE: api/Cancelacions/5
@@ -103,6 +127,17 @@ namespace HotelApi.Controllers
         private bool CancelacionExists(int id)
         {
             return _context.Cancelacion.Any(e => e.Id == id);
+        }
+
+        private static CancelacionDTO ToDTO(Cancelacion ca)
+        {
+            return new CancelacionDTO
+            {
+                Id = ca.Id,
+                DetalleReservaId = ca.DetalleReservaId,
+                Motivo = ca.Motivo,
+                Activo = ca.Activo
+            };
         }
     }
 }

@@ -23,35 +23,83 @@ namespace HotelApi.Controllers
 
         // GET: api/Checkins
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Checkin>>> GetCheckin()
+        public async Task<ActionResult<IEnumerable<CheckinDTO>>> GetCheckin()
         {
-            return await _context.Checkin.ToListAsync();
+            var checkins = await _context.Checkin
+                .Include(c => c.DetalleHuespedes) // Asegúrate de incluir las navegaciones necesarias
+                    .ThenInclude(dh => dh.Nombre)
+                .ToListAsync();
+            var checkInsDTO = checkins.Select(c => ToDTO(c)).ToList();
+            return Ok(checkInsDTO);
         }
 
         // GET: api/Checkins/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Checkin>> GetCheckin(int id)
+        public async Task<ActionResult<CheckinDTO>> GetCheckin(int id)
         {
-            var checkin = await _context.Checkin.FindAsync(id);
+            var checkin = await _context.Checkin
+                .Include(c => c.DetalleHuespedes)
+                    .ThenInclude(dh => dh.Nombre)
+                .FirstOrDefaultAsync(c => c.Id == id);  
 
             if (checkin == null)
             {
                 return NotFound();
             }
 
-            return checkin;
+            return ToDTO(checkin);
         }
 
         // PUT: api/Checkins/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCheckin(int id, Checkin checkin)
+        public async Task<IActionResult> PutCheckin(int id, CheckinDTO ciDto)
         {
-            if (id != checkin.Id)
+            if (id != ciDto.Id)
             {
                 return BadRequest();
             }
 
+            var checkin = await _context.Checkin
+                .Include(c => c.DetalleHuespedes)
+                .FirstOrDefaultAsync(c => c.Id == id);
+            if (checkin == null)
+            {
+                return NotFound();
+            }
+
+            checkin.ReservaId = ciDto.ReservaId;
+            
+            var existingDetalleHuespedes = checkin.DetalleHuespedes.ToList();
+            var updatedDetalleHuespedes = ciDto.DetalleHuespedes.Select(dto => new DetalleHuesped
+            {
+                Id = dto.Id, // Si el DTO incluye el ID del DetalleHuesped existente
+                Nombre = dto.Nombre,
+                NumDocumento = dto.NumDocumento
+            }).ToList();
+
+            // Eliminar los DetalleHuespedes que ya no están en el DTO
+            foreach (var existingHuesped in existingDetalleHuespedes)
+            {
+                if (!updatedDetalleHuespedes.Any(updated => updated.Id == existingHuesped.Id && updated.Id != 0)) // Considerar ID 0 para nuevos
+                {
+                    _context.DetalleHuesped.Remove(existingHuesped);
+                }
+
+            }
+            // Agregar o actualizar los DetalleHuespedes del DTO
+            foreach (var updatedHuesped in updatedDetalleHuespedes)
+            {
+                var existing = existingDetalleHuespedes.FirstOrDefault(e => e.Id == updatedHuesped.Id && e.Id != 0);
+                if (existing != null)
+                {
+                    _context.Entry(existing).CurrentValues.SetValues(updatedHuesped);
+                }
+                else
+                {
+                    checkin.DetalleHuespedes.Add(updatedHuesped);
+                }
+            }
             _context.Entry(checkin).State = EntityState.Modified;
 
             try
@@ -76,13 +124,31 @@ namespace HotelApi.Controllers
         // POST: api/Checkins
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Checkin>> PostCheckin(Checkin checkin)
+        public async Task<ActionResult<CheckinDTO>> PostCheckin(CheckinDTO checkinDTO)
         {
+            var checkin = new Checkin
+            {
+                ReservaId = checkinDTO.ReservaId,
+                Activo = checkinDTO.Activo,
+                DetalleHuespedes = new System.Collections.ObjectModel.Collection<DetalleHuesped>(
+                    checkinDTO.DetalleHuespedes?.Select(dto => new DetalleHuesped
+                    {
+                        Nombre = dto.Nombre,
+                        NumDocumento = dto.NumDocumento,
+                        Activo = dto.Activo
+                    }).ToList() ?? new List<DetalleHuesped>()
+                )
+            };
+
             _context.Checkin.Add(checkin);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCheckin", new { id = checkin.Id }, checkin);
+            // Cargar los DetalleHuespedes para el DTO de respuesta
+            await _context.Entry(checkin).Collection(c => c.DetalleHuespedes).LoadAsync();
+
+            return CreatedAtAction(nameof(GetCheckin), new { id = checkin.Id }, ToDTO(checkin));
         }
+
 
         // DELETE: api/Checkins/5
         [HttpDelete("{id}")]
@@ -103,6 +169,21 @@ namespace HotelApi.Controllers
         private bool CheckinExists(int id)
         {
             return _context.Checkin.Any(e => e.Id == id);
+        }
+
+        private static CheckinDTO ToDTO(Checkin ci)
+        {
+            return new CheckinDTO
+            {
+                Id = ci.Id,
+                ReservaId = ci.ReservaId,
+                DetalleHuespedes = ci.DetalleHuespedes.Select(dh => new DetalleHuespedDTO
+                {
+                    Id = dh.Id,
+                    Nombre = dh.Nombre,
+                    NumDocumento = dh.NumDocumento
+                }).ToList() ?? new List<DetalleHuespedDTO>()
+            };
         }
     }
 }
