@@ -23,5 +23,6 @@ namespace HotelApi.Data
         public DbSet<HotelApi.Models.Checkin> Checkin { get; set; } = default!;
         public DbSet<HotelApi.Models.Checkout> Checkout { get; set; } = default!;
         public DbSet<HotelApi.Models.Consulta> Consulta { get; set; } = default!;
+        public DbSet<HotelApi.Models.DetalleHuesped> DetalleHuesped { get; set; } = default!;
     }
 }
