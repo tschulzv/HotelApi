@@ -24,6 +24,6 @@ namespace HotelApi.Models
         [Required]
         public bool Activo { get; set; } = true;
 
-        public ICollection<TipoHabitacion> TipoHabitacion { get; set; }
+        public ICollection<TipoHabitacion> TiposHabitaciones { get; set; }
     }
 }
