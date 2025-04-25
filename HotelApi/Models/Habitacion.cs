@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.ObjectModel;
 
 namespace HotelApi.Models
 {
@@ -34,5 +35,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+
+        public Collection<DetalleReserva> DetalleReservas { get; set; }
     }
 }
