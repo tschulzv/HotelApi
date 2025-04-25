@@ -43,6 +43,8 @@ namespace HotelApi.Models
 
         public ICollection<DetalleReserva> Detalles { get; set; }
 
-        public Checkin Checkin { get; set; }
+        public Checkin Checkin { get; set; } // navegacion al checkin
+
+        public Checkout Checkout { get; set; } // navegacion al checkout
     }
 }

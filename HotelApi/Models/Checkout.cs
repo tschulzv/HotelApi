@@ -12,6 +12,8 @@ namespace HotelApi.Models
         [Required]
         public int ReservaId { get; set; }
 
+        public Reserva Reserva { get; set; }
+
         [Required]
         public DateTime FechaCheckOut { get; set; }
 
