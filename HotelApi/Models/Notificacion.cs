@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HotelApi.Models
 {
-    public class Notificacion
+    public class Solicitud
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
-        public int TipoNotificacionId { get; set; }
+        public int TipoSolicitudId { get; set; }
 
         public int? ReservaId { get; set; }
         public int? CancelacionId { get; set; }

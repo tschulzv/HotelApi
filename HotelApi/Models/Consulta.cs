@@ -33,5 +33,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+
+        public Solicitud Solicitud { get; set; }
     }
 }

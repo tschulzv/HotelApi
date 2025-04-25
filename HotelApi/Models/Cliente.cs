@@ -29,14 +29,9 @@ namespace HotelApi.Models
         [StringLength(50, MinimumLength = 5)]
         public string NumDocumento { get; set; }
 
-        /*
+      
         [Required]
-        [StringLength(50, MinimumLength = 5)]
-        public string TipoDocumento { get; set; }
-        */ //esto debe ser una fk
-
-        [Required]
-        // FK y propiedad de navegacion del tipo de vehiculo 
+        // FK y propiedad de navegacion del tipo de documento 
         public int TipoDocumentoId { get; set; }
 
         public TipoDocumento TipoDocumento { get; set; }
