@@ -30,7 +30,7 @@ namespace HotelApi.Models
         [Required]
         public int EstadoId { get; set; }
 
-        public ICollection<DetalleReservaDTO> Detalles { get; set; }
+        public ICollection<DetalleReservaDTO>? Detalles { get; set; }
 
 
     }

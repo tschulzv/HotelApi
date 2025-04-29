@@ -45,10 +45,10 @@ namespace HotelApi.Models
         [Required]
         public bool Activo { get; set; } = true;
 
-        public ICollection<DetalleReserva> Detalles { get; set; }
+        public ICollection<DetalleReserva>? Detalles { get; set; }
 
-        public Checkin Checkin { get; set; } // navegacion al checkin
+        public Checkin? Checkin { get; set; } // navegacion al checkin
 
-        public Checkout Checkout { get; set; } // navegacion al checkout
+        public Checkout? Checkout { get; set; } // navegacion al checkout
     }
 }

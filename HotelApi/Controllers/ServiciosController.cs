@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
+using System.Runtime.ConstrainedExecution;
 
 namespace HotelApi.Controllers
 {
@@ -34,7 +35,7 @@ namespace HotelApi.Controllers
 
         // GET: api/Servicios/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Servicio>> GetServicio(int id)
+        public async Task<ActionResult<ServicioDTO>> GetServicio(int id)
         {
             var servicio = await _context.Servicio.FindAsync(id);
 
@@ -43,20 +44,31 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return servicio;
+            return ToDTO(servicio);
         }
 
         // PUT: api/Servicios/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutServicio(int id, Servicio servicio)
+        public async Task<IActionResult> PutServicio(int id, ServicioDTO serDto)
         {
-            if (id != servicio.Id)
+            if (id != serDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(servicio).State = EntityState.Modified;
+            var ser = await _context.Servicio.FindAsync(id);
+
+            if (ser == null)
+            {
+                return NotFound();
+            }
+
+            ser.Nombre = serDto.Nombre;
+            ser.IconName = serDto.IconName;
+            ser.Actualizacion = DateTime.Now;
+
+            _context.Entry(ser).State = EntityState.Modified;
 
             try
             {
@@ -80,26 +92,57 @@ namespace HotelApi.Controllers
         // POST: api/Servicios
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Servicio>> PostServicio(Servicio servicio)
+        public async Task<ActionResult<ServicioDTO>> PostServicio(ServicioDTO serDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+            }
+            var servicio = new Servicio
+            {
+                Nombre = serDto.Nombre,
+                IconName = serDto.IconName,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
+
             _context.Servicio.Add(servicio);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetServicio", new { id = servicio.Id }, servicio);
+            return CreatedAtAction("GetServicio", new { id = servicio.Id }, serDto);
         }
 
         // DELETE: api/Servicios/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteServicio(int id)
         {
-            var servicio = await _context.Servicio.FindAsync(id);
-            if (servicio == null)
+            var ser = await _context.Servicio.FindAsync(id);
+            if (ser == null)
             {
                 return NotFound();
             }
 
-            _context.Servicio.Remove(servicio);
-            await _context.SaveChangesAsync();
+            ser.Activo = false;
+            ser.Actualizacion = DateTime.Now;
+
+            _context.Entry(ser).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ServicioExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }

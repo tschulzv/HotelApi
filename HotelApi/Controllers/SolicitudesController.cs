@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
+using System.Runtime.ConstrainedExecution;
 
 namespace HotelApi.Controllers
 {
@@ -23,14 +24,16 @@ namespace HotelApi.Controllers
 
         // GET: api/Solicitudes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Solicitud>>> GetSolicitud()
+        public async Task<ActionResult<IEnumerable<SolicitudDTO>>> GetSolicitud()
         {
-            return await _context.Solicitud.ToListAsync();
+            var sol = await _context.Solicitud.ToListAsync();
+            var solDto = sol.Select(s => ToDTO(s));
+            return Ok(solDto);
         }
 
         // GET: api/Solicitudes/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Solicitud>> GetSolicitud(int id)
+        public async Task<ActionResult<SolicitudDTO>> GetSolicitud(int id)
         {
             var solicitud = await _context.Solicitud.FindAsync(id);
 
@@ -39,20 +42,33 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return solicitud;
+            return ToDTO(solicitud);
         }
 
         // PUT: api/Solicitudes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSolicitud(int id, Solicitud solicitud)
+        public async Task<IActionResult> PutSolicitud(int id, SolicitudDTO solDto)
         {
-            if (id != solicitud.Id)
+            if (id != solDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(solicitud).State = EntityState.Modified;
+            var sol = await _context.Solicitud.FindAsync(id);
+
+            if (sol == null)
+            {
+                return NotFound();
+            }
+
+            sol.ReservaId = solDto.Id;
+            sol.CancelacionId = solDto.CancelacionId;
+            sol.ConsultaId = solDto.ConsultaId;
+            sol.EsLeida = solDto.EsLeida;
+            sol.Actualizacion = DateTime.Now;
+
+            _context.Entry(sol).State = EntityState.Modified;
 
             try
             {
@@ -76,26 +92,58 @@ namespace HotelApi.Controllers
         // POST: api/Solicitudes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Solicitud>> PostSolicitud(Solicitud solicitud)
+        public async Task<ActionResult<SolicitudDTO>> PostSolicitud(SolicitudDTO solDTO)
         {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+            }
+            var solicitud = new Solicitud
+            {
+                ReservaId = solDTO.ReservaId,
+                CancelacionId = solDTO.CancelacionId,
+                ConsultaId = solDTO.ConsultaId,
+                EsLeida = solDTO.EsLeida,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
             _context.Solicitud.Add(solicitud);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSolicitud", new { id = solicitud.Id }, solicitud);
+            return CreatedAtAction("GetSolicitud", new { id = solicitud.Id }, solDTO);
         }
 
         // DELETE: api/Solicitudes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSolicitud(int id)
         {
-            var solicitud = await _context.Solicitud.FindAsync(id);
-            if (solicitud == null)
+            var sol = await _context.Solicitud.FindAsync(id);
+            if (sol == null)
             {
                 return NotFound();
             }
 
-            _context.Solicitud.Remove(solicitud);
-            await _context.SaveChangesAsync();
+            sol.Activo = false;
+            sol.Actualizacion = DateTime.Now;
+            _context.Entry(sol).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SolicitudExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
@@ -103,6 +151,19 @@ namespace HotelApi.Controllers
         private bool SolicitudExists(int id)
         {
             return _context.Solicitud.Any(e => e.Id == id);
+        }
+
+        private static SolicitudDTO ToDTO(Solicitud sol)
+        {
+            return new SolicitudDTO
+            {
+                Id = sol.Id,
+                ReservaId = sol.ReservaId,
+                CancelacionId = sol.CancelacionId,
+                ConsultaId = sol.ConsultaId,
+                EsLeida = sol.EsLeida,
+                Creacion = sol.Creacion
+            };
         }
     }
 }

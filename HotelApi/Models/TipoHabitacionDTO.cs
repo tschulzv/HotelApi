@@ -23,6 +23,6 @@ namespace HotelApi.Models
         [Range(0, 1000)]
         public int CantidadDisponible { get; set; }
 
-        public ICollection<ServicioDTO> Servicios { get; set; }
+        public ICollection<ServicioDTO>? Servicios { get; set; }
     }
 }

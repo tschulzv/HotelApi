@@ -23,14 +23,16 @@ namespace HotelApi.Controllers
 
         // GET: api/TiposDocumentos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TipoDocumento>>> GetTipoDocumento()
+        public async Task<ActionResult<IEnumerable<TipoDocumentoDTO>>> GetTipoDocumento()
         {
-            return await _context.TipoDocumento.ToListAsync();
+            var tipos = await _context.TipoDocumento.ToListAsync();
+            var dtos = tipos.Select(t => ToDTO(t));
+            return Ok(dtos);
         }
 
         // GET: api/TiposDocumentos/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TipoDocumento>> GetTipoDocumento(int id)
+        public async Task<ActionResult<TipoDocumentoDTO>> GetTipoDocumento(int id)
         {
             var tipoDocumento = await _context.TipoDocumento.FindAsync(id);
 
@@ -39,20 +41,30 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return tipoDocumento;
+            return ToDTO(tipoDocumento);
         }
 
         // PUT: api/TiposDocumentos/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTipoDocumento(int id, TipoDocumento tipoDocumento)
+        public async Task<IActionResult> PutTipoDocumento(int id, TipoDocumentoDTO tipoDto)
         {
-            if (id != tipoDocumento.Id)
+            if (id != tipoDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(tipoDocumento).State = EntityState.Modified;
+            var tipo = await _context.TipoDocumento.FindAsync(id);
+
+            if (tipo == null)
+            {
+                return NotFound();
+            }
+
+            tipo.Nombre = tipoDto.Nombre;
+            tipo.Actualizacion = DateTime.Now;
+
+            _context.Entry(tipo).State = EntityState.Modified;
 
             try
             {
@@ -76,12 +88,23 @@ namespace HotelApi.Controllers
         // POST: api/TiposDocumentos
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<TipoDocumento>> PostTipoDocumento(TipoDocumento tipoDocumento)
+        public async Task<ActionResult<TipoDocumentoDTO>> PostTipoDocumento(TipoDocumentoDTO tipoDto)
         {
-            _context.TipoDocumento.Add(tipoDocumento);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+            }
+            var tipo = new TipoDocumento
+            {
+                Nombre = tipoDto.Nombre,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
+            _context.TipoDocumento.Add(tipo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTipoDocumento", new { id = tipoDocumento.Id }, tipoDocumento);
+            return CreatedAtAction("GetTipoDocumento", new { id = tipo.Id }, tipoDto);
         }
 
         // DELETE: api/TiposDocumentos/5
@@ -94,8 +117,25 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            _context.TipoDocumento.Remove(tipoDocumento);
-            await _context.SaveChangesAsync();
+            tipoDocumento.Activo = false;
+            tipoDocumento.Actualizacion = DateTime.Now;
+            _context.Entry(tipoDocumento).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TipoDocumentoExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
@@ -103,6 +143,15 @@ namespace HotelApi.Controllers
         private bool TipoDocumentoExists(int id)
         {
             return _context.TipoDocumento.Any(e => e.Id == id);
+        }
+
+        private static TipoDocumentoDTO ToDTO(TipoDocumento tipo)
+        {
+            return new TipoDocumentoDTO
+            {
+                Id = tipo.Id,
+                Nombre = tipo.Nombre
+            };
         }
     }
 }
