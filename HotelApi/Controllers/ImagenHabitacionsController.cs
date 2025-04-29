@@ -107,7 +107,7 @@ namespace HotelApi.Controllers
             _context.ImagenHabitacion.Add(img);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetImagenHabitacion", new { id = img.Id }, imgDTO));
+            return CreatedAtAction("GetImagenHabitacion", new { id = img.Id }, imgDTO);
         }
 
         // DELETE: api/ImagenHabitacions/5
