@@ -27,8 +27,7 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<ImagenHabitacionDTO>>> GetImagenHabitacion()
         {
             var imagenes = await _context.ImagenHabitacion.ToListAsync();
-            var imgDTO = imagenes.Select(i => ToDTO(i));
-            return Ok(imgDTO);
+            return Ok(imagenes.Select(ToDTO).ToList());
         }
 
         // GET: api/ImagenHabitacions/5
@@ -48,25 +47,24 @@ namespace HotelApi.Controllers
         // PUT: api/ImagenHabitacions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutImagenHabitacion(int id, ImagenHabitacionDTO imgDTO)
+        public async Task<IActionResult> PutImagenHabitacion(int id, ImagenHabitacionDTO imagenHabitacionDTO)
         {
-            if (id != imgDTO.Id)
+            if (id != imagenHabitacionDTO.Id)
             {
                 return BadRequest();
             }
 
-            var img = await _context.ImagenHabitacion.FindAsync(id);
-
-            if (img == null)
+            var imagenHabitacion = await _context.ImagenHabitacion.FindAsync(id);
+            if (imagenHabitacion == null)
             {
                 return NotFound();
             }
 
-            img.TipoHabitacionId = imgDTO.TipoHabitacionId;
-            img.Imagen = imgDTO.Imagen;
-            img.Actualizacion = DateTime.Now;
+            imagenHabitacion.TipoHabitacionId = imagenHabitacionDTO.TipoHabitacionId;
+            imagenHabitacion.Imagen = imagenHabitacionDTO.Imagen;
+            imagenHabitacion.Actualizacion = DateTime.Now;
 
-            _context.Entry(img).State = EntityState.Modified;
+            _context.Entry(imagenHabitacion).State = EntityState.Modified;
 
             try
             {
@@ -90,24 +88,24 @@ namespace HotelApi.Controllers
         // POST: api/ImagenHabitacions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ImagenHabitacion>> PostImagenHabitacion(ImagenHabitacionDTO imgDTO)
+        public async Task<ActionResult<ImagenHabitacionDTO>> PostImagenHabitacion(ImagenHabitacionDTO imagenHabitacionDTO)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+                return BadRequest(ModelState);
             }
-            var img = new ImagenHabitacion
+            var imagenHabitacion = new ImagenHabitacion
             {
-                TipoHabitacionId = imgDTO.TipoHabitacionId,
-                Imagen = imgDTO.Imagen,
+                TipoHabitacionId = imagenHabitacionDTO.TipoHabitacionId,
+                Imagen = imagenHabitacionDTO.Imagen,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
                 Activo = true
             };
-            _context.ImagenHabitacion.Add(img);
+            _context.ImagenHabitacion.Add(imagenHabitacion);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetImagenHabitacion", new { id = img.Id }, imgDTO);
+            return CreatedAtAction(nameof(GetImagenHabitacion), new { id = imagenHabitacion.Id }, ToDTO(imagenHabitacion));
         }
 
         // DELETE: api/ImagenHabitacions/5
@@ -122,7 +120,6 @@ namespace HotelApi.Controllers
 
             imagenHabitacion.Activo = false;
             imagenHabitacion.Actualizacion = DateTime.Now;
-
             _context.Entry(imagenHabitacion).State = EntityState.Modified;
 
             try
@@ -149,14 +146,15 @@ namespace HotelApi.Controllers
             return _context.ImagenHabitacion.Any(e => e.Id == id);
         }
 
-        private static ImagenHabitacionDTO ToDTO(ImagenHabitacion img)
+        private static ImagenHabitacionDTO ToDTO(ImagenHabitacion imagenHabitacion)
         {
             return new ImagenHabitacionDTO
             {
-                Id = img.Id,
-                TipoHabitacionId = img.TipoHabitacionId,
-                Imagen = img.Imagen
+                Id = imagenHabitacion.Id,
+                TipoHabitacionId = imagenHabitacion.TipoHabitacionId,
+                Imagen = imagenHabitacion.Imagen
             };
         }
     }
 }
+

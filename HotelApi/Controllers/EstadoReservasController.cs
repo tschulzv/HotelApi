@@ -23,14 +23,16 @@ namespace HotelApi.Controllers
 
         // GET: api/EstadoReservas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EstadoReserva>>> GetEstadoReserva()
+        public async Task<ActionResult<IEnumerable<EstadoReservaDTO>>> GetEstadoReserva()
         {
-            return await _context.EstadoReserva.ToListAsync();
+            var estadoReservas = await _context.EstadoReserva.ToListAsync();
+            var estadoReservasDTOs = estadoReservas.Select(e => ToDTO(e)).ToList();
+            return Ok(estadoReservasDTOs);
         }
 
         // GET: api/EstadoReservas/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<EstadoReserva>> GetEstadoReserva(int id)
+        public async Task<ActionResult<EstadoReservaDTO>> GetEstadoReserva(int id)
         {
             var estadoReserva = await _context.EstadoReserva.FindAsync(id);
 
@@ -39,18 +41,26 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return estadoReserva;
+            return ToDTO(estadoReserva);
         }
 
         // PUT: api/EstadoReservas/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEstadoReserva(int id, EstadoReserva estadoReserva)
+        public async Task<IActionResult> PutEstadoReserva(int id, EstadoReservaDTO estadoReservaDTO)
         {
-            if (id != estadoReserva.Id)
+            if (id != estadoReservaDTO.Id)
             {
                 return BadRequest();
             }
+
+            var estadoReserva = await _context.EstadoReserva.FindAsync(id);
+            if (estadoReserva == null)
+            {
+                return NotFound();
+            }
+
+            estadoReserva.Nombre = estadoReservaDTO.Nombre;
 
             _context.Entry(estadoReserva).State = EntityState.Modified;
 
@@ -76,12 +86,16 @@ namespace HotelApi.Controllers
         // POST: api/EstadoReservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<EstadoReserva>> PostEstadoReserva(EstadoReserva estadoReserva)
+        public async Task<ActionResult<EstadoReservaDTO>> PostEstadoReserva(EstadoReservaDTO estadoReservaDTO)
         {
+            var estadoReserva = new EstadoReserva
+            {
+                Nombre = estadoReservaDTO.Nombre
+            };
             _context.EstadoReserva.Add(estadoReserva);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEstadoReserva", new { id = estadoReserva.Id }, estadoReserva);
+            return CreatedAtAction(nameof(GetEstadoReserva), new { id = estadoReserva.Id }, ToDTO(estadoReserva));
         }
 
         // DELETE: api/EstadoReservas/5
@@ -103,6 +117,15 @@ namespace HotelApi.Controllers
         private bool EstadoReservaExists(int id)
         {
             return _context.EstadoReserva.Any(e => e.Id == id);
+        }
+
+        private static EstadoReservaDTO ToDTO(EstadoReserva estadoReserva)
+        {
+            return new EstadoReservaDTO
+            {
+                Id = estadoReserva.Id,
+                Nombre = estadoReserva.Nombre
+            };
         }
     }
 }
