@@ -23,14 +23,15 @@ namespace HotelApi.Controllers
 
         // GET: api/DetalleReservas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DetalleReserva>>> GetDetalleReserva()
+        public async Task<ActionResult<IEnumerable<DetalleReservaDTO>>> GetDetalleReserva()
         {
-            return await _context.DetalleReserva.ToListAsync();
+            var detalleReservas = await _context.DetalleReserva.ToListAsync();
+            return detalleReservas.Select(ToDTO).ToList();
         }
 
         // GET: api/DetalleReservas/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<DetalleReserva>> GetDetalleReserva(int id)
+        public async Task<ActionResult<DetalleReservaDTO>> GetDetalleReserva(int id)
         {
             var detalleReserva = await _context.DetalleReserva.FindAsync(id);
 
@@ -39,18 +40,32 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return detalleReserva;
+            return ToDTO(detalleReserva);
         }
 
         // PUT: api/DetalleReservas/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDetalleReserva(int id, DetalleReserva detalleReserva)
+        public async Task<IActionResult> PutDetalleReserva(int id, DetalleReservaDTO detalleReservaDTO)
         {
-            if (id != detalleReserva.Id)
+            if (id != detalleReservaDTO.Id)
             {
                 return BadRequest();
             }
+
+            var detalleReserva = await _context.DetalleReserva.FindAsync(id);
+            if (detalleReserva == null)
+            {
+                return NotFound();
+            }
+
+            detalleReserva.ReservaId = detalleReservaDTO.ReservaId;
+            detalleReserva.HabitacionId = detalleReservaDTO.HabitacionId;
+            detalleReserva.CantidadAdultos = detalleReservaDTO.CantidadAdultos;
+            detalleReserva.CantidadNinhos = detalleReservaDTO.CantidadNinhos;
+            detalleReserva.PensionId = detalleReservaDTO.PensionId;
+            detalleReserva.Activo = detalleReservaDTO.Activo;
+            detalleReserva.Actualizacion = DateTime.Now;
 
             _context.Entry(detalleReserva).State = EntityState.Modified;
 
@@ -76,12 +91,23 @@ namespace HotelApi.Controllers
         // POST: api/DetalleReservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<DetalleReserva>> PostDetalleReserva(DetalleReserva detalleReserva)
+        public async Task<ActionResult<DetalleReservaDTO>> PostDetalleReserva(DetalleReservaDTO detalleReservaDTO)
         {
+            var detalleReserva = new DetalleReserva
+            {
+                ReservaId = detalleReservaDTO.ReservaId,
+                HabitacionId = detalleReservaDTO.HabitacionId,
+                CantidadAdultos = detalleReservaDTO.CantidadAdultos,
+                CantidadNinhos = detalleReservaDTO.CantidadNinhos,
+                PensionId = detalleReservaDTO.PensionId,
+                Activo = detalleReservaDTO.Activo,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now
+            };
             _context.DetalleReserva.Add(detalleReserva);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetDetalleReserva", new { id = detalleReserva.Id }, detalleReserva);
+            return CreatedAtAction(nameof(GetDetalleReserva), new { id = detalleReserva.Id }, ToDTO(detalleReserva));
         }
 
         // DELETE: api/DetalleReservas/5
@@ -103,6 +129,20 @@ namespace HotelApi.Controllers
         private bool DetalleReservaExists(int id)
         {
             return _context.DetalleReserva.Any(e => e.Id == id);
+        }
+
+        private static DetalleReservaDTO ToDTO(DetalleReserva detalleReserva)
+        {
+            return new DetalleReservaDTO
+            {
+                Id = detalleReserva.Id,
+                ReservaId = detalleReserva.ReservaId,
+                HabitacionId = detalleReserva.HabitacionId,
+                CantidadAdultos = detalleReserva.CantidadAdultos,
+                CantidadNinhos = detalleReserva.CantidadNinhos,
+                PensionId = detalleReserva.PensionId,
+                Activo = detalleReserva.Activo
+            };
         }
     }
 }
