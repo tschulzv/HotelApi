@@ -26,7 +26,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolicitudDTO>>> GetSolicitud()
         {
-            var sol = await _context.Solicitud.ToListAsync();
+            var sol = await _context.Solicitud.Where(s => s.Activo).ToListAsync();
             var solDto = sol.Select(s => ToDTO(s));
             return Ok(solDto);
         }
@@ -35,7 +35,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SolicitudDTO>> GetSolicitud(int id)
         {
-            var solicitud = await _context.Solicitud.FindAsync(id);
+            var solicitud = await _context.Solicitud.Where(s => s.Activo && s.Id == id).FirstOrDefaultAsync();
 
             if (solicitud == null)
             {

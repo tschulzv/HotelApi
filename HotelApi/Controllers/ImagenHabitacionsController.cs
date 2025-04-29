@@ -26,7 +26,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ImagenHabitacionDTO>>> GetImagenHabitacion()
         {
-            var imagenes = await _context.ImagenHabitacion.ToListAsync();
+            var imagenes = await _context.ImagenHabitacion.Where(i => i.Activo).ToListAsync();
             var imgDTO = imagenes.Select(i => ToDTO(i));
             return Ok(imgDTO);
         }
@@ -35,7 +35,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ImagenHabitacionDTO>> GetImagenHabitacion(int id)
         {
-            var imagenHabitacion = await _context.ImagenHabitacion.FindAsync(id);
+            var imagenHabitacion = await _context.ImagenHabitacion.Where(i => i.Activo && i.Id == id).FirstOrDefaultAsync();
 
             if (imagenHabitacion == null)
             {

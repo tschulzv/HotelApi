@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TipoHabitacionDTO>>> GetTipoHabitacion()
         {
-            var tipos = await _context.TipoHabitacion.ToListAsync();
+            var tipos = await _context.TipoHabitacion.Where(t => t.Activo).ToListAsync();
             var dtos = tipos.Select(t => ToDTO(t));
             return Ok(dtos);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<TipoHabitacionDTO>> GetTipoHabitacion(int id)
         {
-            var tipoHabitacion = await _context.TipoHabitacion.FindAsync(id);
+            var tipoHabitacion = await _context.TipoHabitacion.Where(t => t.Activo && t.Id == id).FirstOrDefaultAsync();
 
             if (tipoHabitacion == null)
             {
@@ -44,6 +44,8 @@ namespace HotelApi.Controllers
             return ToDTO(tipoHabitacion);
         }
 
+        
+         // asumir que no se puede agregar un servicio inexistente, es decir se deben crear los servicios con un post de servicio
         // PUT: api/TiposHabitaciones/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -54,20 +56,37 @@ namespace HotelApi.Controllers
                 return BadRequest();
             }
 
-            var tipo = await _context.TipoHabitacion.FindAsync(id);
+            var tipo = await _context.TipoHabitacion
+                .Include(t => t.Servicios) // Trae los servicios relacionados
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (tipo == null)
             {
                 return NotFound();
             }
 
+            // Actualizar propiedades simples
             tipo.Nombre = tipoDto.Nombre;
             tipo.Descripcion = tipoDto.Descripcion;
             tipo.PrecioBase = tipoDto.PrecioBase;
             tipo.CantidadDisponible = tipoDto.CantidadDisponible;
-            // !!! falta actualizar la lista de servicios
+            tipo.Actualizacion = DateTime.Now;
 
-            _context.Entry(tipo).State = EntityState.Modified;
+            // Sincronizar lista de servicios
+            if (tipoDto.Servicios != null)
+            {
+                // Obtener todos los servicios que vienen en el DTO desde la base de datos
+                var nuevosServicios = await _context.Servicio
+                    .Where(s => tipoDto.Servicios.Select(d => d.Id).Contains(s.Id))
+                    .ToListAsync();
+
+                // Limpiar y reemplazar
+                tipo.Servicios.Clear();
+                foreach (var servicio in nuevosServicios)
+                {
+                    tipo.Servicios.Add(servicio);
+                }
+            }
 
             try
             {

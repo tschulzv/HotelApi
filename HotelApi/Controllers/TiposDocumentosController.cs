@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TipoDocumentoDTO>>> GetTipoDocumento()
         {
-            var tipos = await _context.TipoDocumento.ToListAsync();
+            var tipos = await _context.TipoDocumento.Where(t => t.Activo).ToListAsync();
             var dtos = tipos.Select(t => ToDTO(t));
             return Ok(dtos);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<TipoDocumentoDTO>> GetTipoDocumento(int id)
         {
-            var tipoDocumento = await _context.TipoDocumento.FindAsync(id);
+            var tipoDocumento = await _context.TipoDocumento.Where(t => t.Activo && t.Id == id).FirstOrDefaultAsync();
 
             if (tipoDocumento == null)
             {

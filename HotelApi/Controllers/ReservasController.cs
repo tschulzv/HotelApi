@@ -25,7 +25,8 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservas()
         {
-            var res = await _context.Reserva.ToListAsync();
+            // obtener solo los activos
+            var res = await _context.Reserva.Where(r => r.Activo).ToListAsync();
             var resDtos = res.Select(r => ToDTO(r));
             return Ok(resDtos);
         }
@@ -34,7 +35,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ReservaDTO>> GetReserva(int id)
         {
-            var reserva = await _context.Reserva.FindAsync(id);
+            var reserva = await _context.Reserva.Where(r => r.Activo && r.Id == id).FirstOrDefaultAsync();
 
             if (reserva == null)
             {
@@ -50,17 +51,16 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> PutReserva(int id, ReservaDTO resDTO)
         {
             if (id != resDTO.Id)
-            {
                 return BadRequest();
-            }
 
-            var res = await _context.Reserva.FindAsync(id);
+            var res = await _context.Reserva
+                .Include(r => r.Detalles)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
             if (res == null)
-            {
                 return NotFound();
-            }
 
+            // Actualizar campos simples
             res.ClienteId = resDTO.ClienteId;
             res.Codigo = resDTO.Codigo;
             res.FechaIngreso = resDTO.FechaIngreso;
@@ -70,7 +70,44 @@ namespace HotelApi.Controllers
             res.EstadoId = resDTO.EstadoId;
             res.Actualizacion = DateTime.Now;
 
-            _context.Entry(res).State = EntityState.Modified;
+            var detallesDTO = resDTO.Detalles ?? new List<DetalleReservaDTO>();
+            var idsDTO = detallesDTO.Select(d => d.Id).ToHashSet();
+
+            // Desactivar detalles que no vienen en el DTO (soft delete)
+            foreach (var detalle in res.Detalles)
+            {
+                if (!idsDTO.Contains(detalle.Id))
+                {
+                    detalle.Activo = false;
+                }
+            }
+
+            // Agregar o actualizar detalles del DTO
+            foreach (var dto in detallesDTO)
+            {
+                var existente = res.Detalles.FirstOrDefault(d => d.Id == dto.Id);
+                if (existente != null)
+                {
+                    // Actualizar
+                    existente.HabitacionId = dto.HabitacionId;
+                    existente.CantidadAdultos = dto.CantidadAdultos;
+                    existente.CantidadNinhos = dto.CantidadNinhos;
+                    existente.PensionId = dto.PensionId;
+                    existente.Activo = true; // Revivir si estaba inactivo
+                }
+                else
+                {
+                    // Nuevo detalle
+                    res.Detalles.Add(new DetalleReserva
+                    {
+                        HabitacionId = dto.HabitacionId,
+                        CantidadAdultos = dto.CantidadAdultos,
+                        CantidadNinhos = dto.CantidadNinhos,
+                        PensionId = dto.PensionId,
+                        Activo = true
+                    });
+                }
+            }
 
             try
             {
@@ -79,17 +116,14 @@ namespace HotelApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!ReservaExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
+
 
         // POST: api/Reservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

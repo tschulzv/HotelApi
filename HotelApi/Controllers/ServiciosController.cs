@@ -26,18 +26,17 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetServicios()
         {
-            var se = await _context.Servicio.ToListAsync();
+            var se = await _context.Servicio.Where(s => s.Activo).ToListAsync();
             var seDtos = se.Select(s => ToDTO(s));
             return Ok(seDtos);
         }
 
-        // !!!!!!!!!!!!!! HASTA ACA ESTÁ HECHO  -----------------------------------------------
 
         // GET: api/Servicios/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ServicioDTO>> GetServicio(int id)
         {
-            var servicio = await _context.Servicio.FindAsync(id);
+            var servicio = await _context.Servicio.Where(s => s.Activo && s.Id == id).FirstOrDefaultAsync();
 
             if (servicio == null)
             {

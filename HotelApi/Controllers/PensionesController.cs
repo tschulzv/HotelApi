@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PensionDTO>>> GetPension()
         {
-            var pensiones = await _context.Pension.ToListAsync();
+            var pensiones = await _context.Pension.Where(p => p.Activo).ToListAsync();
             var pensionesDtos = pensiones.Select(p => ToDTO(p));
             return Ok(pensionesDtos);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PensionDTO>> GetPension(int id)
         {
-            var pension = await _context.Pension.FindAsync(id);
+            var pension = await _context.Pension.Where(p => p.Activo && p.Id == id).FirstOrDefaultAsync();
 
             if (pension == null)
             {
