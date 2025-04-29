@@ -64,6 +64,7 @@ namespace HotelApi.Controllers
             ca.DetalleReservaId = caDto.DetalleReservaId;
             ca.Motivo = caDto.Motivo;
             ca.Activo = caDto.Activo;
+            ca.Actualizacion = DateTime.Now;
 
             _context.Entry(ca).State = EntityState.Modified;
 

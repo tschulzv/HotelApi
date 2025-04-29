@@ -100,6 +100,8 @@ namespace HotelApi.Controllers
                     checkin.DetalleHuespedes.Add(updatedHuesped);
                 }
             }
+
+            checkin.Actualizacion = DateTime.Now;
             _context.Entry(checkin).State = EntityState.Modified;
 
             try
@@ -137,7 +139,9 @@ namespace HotelApi.Controllers
                         NumDocumento = dto.NumDocumento,
                         Activo = dto.Activo
                     }).ToList() ?? new List<DetalleHuesped>()
-                )
+                ),
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now
             };
 
             _context.Checkin.Add(checkin);

@@ -23,14 +23,15 @@ namespace HotelApi.Controllers
 
         // GET: api/DetalleHuespeds
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DetalleHuesped>>> GetDetalleHuesped()
+        public async Task<ActionResult<IEnumerable<DetalleHuespedDTO>>> GetDetalleHuesped()
         {
-            return await _context.DetalleHuesped.ToListAsync();
+            var detalleHuespeds = await _context.DetalleHuesped.ToListAsync();
+            return detalleHuespeds.Select(ToDTO).ToList();
         }
 
         // GET: api/DetalleHuespeds/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<DetalleHuesped>> GetDetalleHuesped(int id)
+        public async Task<ActionResult<DetalleHuespedDTO>> GetDetalleHuesped(int id)
         {
             var detalleHuesped = await _context.DetalleHuesped.FindAsync(id);
 
@@ -39,18 +40,30 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return detalleHuesped;
+            return ToDTO(detalleHuesped);
         }
 
         // PUT: api/DetalleHuespeds/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDetalleHuesped(int id, DetalleHuesped detalleHuesped)
+        public async Task<IActionResult> PutDetalleHuesped(int id, DetalleHuespedDTO detalleHuespedDTO)
         {
-            if (id != detalleHuesped.Id)
+            if (id != detalleHuespedDTO.Id)
             {
                 return BadRequest();
             }
+
+            var detalleHuesped = await _context.DetalleHuesped.FindAsync(id);
+            if (detalleHuesped == null)
+            {
+                return NotFound();
+            }
+
+            detalleHuesped.CheckInId = detalleHuespedDTO.CheckInId;
+            detalleHuesped.Nombre = detalleHuespedDTO.Nombre;
+            detalleHuesped.NumDocumento = detalleHuespedDTO.NumDocumento;
+            detalleHuesped.Activo = detalleHuespedDTO.Activo;
+            detalleHuesped.Actualizacion = DateTime.Now; // Actualizar la fecha de actualización
 
             _context.Entry(detalleHuesped).State = EntityState.Modified;
 
@@ -76,12 +89,21 @@ namespace HotelApi.Controllers
         // POST: api/DetalleHuespeds
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<DetalleHuesped>> PostDetalleHuesped(DetalleHuesped detalleHuesped)
+        public async Task<ActionResult<DetalleHuespedDTO>> PostDetalleHuesped(DetalleHuespedDTO detalleHuespedDTO)
         {
+            var detalleHuesped = new DetalleHuesped
+            {
+                CheckInId = detalleHuespedDTO.CheckInId,
+                Nombre = detalleHuespedDTO.Nombre,
+                NumDocumento = detalleHuespedDTO.NumDocumento,
+                Activo = detalleHuespedDTO.Activo,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now
+            };
             _context.DetalleHuesped.Add(detalleHuesped);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetDetalleHuesped", new { id = detalleHuesped.Id }, detalleHuesped);
+            return CreatedAtAction(nameof(GetDetalleHuesped), new { id = detalleHuesped.Id }, ToDTO(detalleHuesped));
         }
 
         // DELETE: api/DetalleHuespeds/5
@@ -103,6 +125,18 @@ namespace HotelApi.Controllers
         private bool DetalleHuespedExists(int id)
         {
             return _context.DetalleHuesped.Any(e => e.Id == id);
+        }
+
+        private static DetalleHuespedDTO ToDTO(DetalleHuesped detalleHuesped)
+        {
+            return new DetalleHuespedDTO
+            {
+                Id = detalleHuesped.Id,
+                CheckInId = detalleHuesped.CheckInId,
+                Nombre = detalleHuesped.Nombre,
+                NumDocumento = detalleHuesped.NumDocumento,
+                Activo = detalleHuesped.Activo
+            };
         }
     }
 }

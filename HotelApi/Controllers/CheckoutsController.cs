@@ -23,14 +23,16 @@ namespace HotelApi.Controllers
 
         // GET: api/Checkouts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Checkout>>> GetCheckout()
+        public async Task<ActionResult<IEnumerable<CheckoutDTO>>> GetCheckout()
         {
-            return await _context.Checkout.ToListAsync();
+            var checkouts = await _context.Checkout.ToListAsync();
+            var checkoutsDTOs = checkouts.Select(c => ToDTO(c)).ToList();
+            return Ok(checkoutsDTOs);
         }
 
         // GET: api/Checkouts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Checkout>> GetCheckout(int id)
+        public async Task<ActionResult<CheckoutDTO>> GetCheckout(int id)
         {
             var checkout = await _context.Checkout.FindAsync(id);
 
@@ -39,20 +41,29 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            return checkout;
+            return ToDTO(checkout);
         }
 
         // PUT: api/Checkouts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCheckout(int id, Checkout checkout)
+        public async Task<IActionResult> PutCheckout(int id, CheckoutDTO checkoutDTO)
         {
-            if (id != checkout.Id)
+            if (id != checkoutDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(checkout).State = EntityState.Modified;
+            var checkout = await _context.Checkout.FindAsync(id);
+            if (checkout == null)
+            {
+                return NotFound();
+            }
+
+            checkout.ReservaId = checkoutDTO.ReservaId;
+            checkout.Activo = checkoutDTO.Activo;
+            // Mapea otras propiedades actualizables
+            _context.Entry(checkoutDTO).State = EntityState.Modified;
 
             try
             {
@@ -76,8 +87,14 @@ namespace HotelApi.Controllers
         // POST: api/Checkouts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Checkout>> PostCheckout(Checkout checkout)
+        public async Task<ActionResult<CheckoutDTO>> PostCheckout(CheckoutDTO checkoutDTO)
         {
+            var checkout = new Checkout
+            {
+                Id = checkoutDTO.Id,
+                ReservaId = checkoutDTO.ReservaId,
+                Activo = checkoutDTO.Activo
+            };
             _context.Checkout.Add(checkout);
             await _context.SaveChangesAsync();
 
@@ -103,6 +120,16 @@ namespace HotelApi.Controllers
         private bool CheckoutExists(int id)
         {
             return _context.Checkout.Any(e => e.Id == id);
+        }
+
+        private static CheckoutDTO ToDTO(Checkout ci)
+        {
+            return new CheckoutDTO
+            {
+                Id = ci.Id,
+                ReservaId = ci.ReservaId,
+                Activo = ci.Activo
+            };
         }
     }
 }
