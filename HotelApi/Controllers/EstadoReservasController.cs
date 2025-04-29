@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EstadoReservaDTO>>> GetEstadoReserva()
         {
-            var estadoReservas = await _context.EstadoReserva.ToListAsync();
+            var estadoReservas = await _context.EstadoReserva.Where(e => e.Activo).ToListAsync();
             var estadoReservasDTOs = estadoReservas.Select(e => ToDTO(e)).ToList();
             return Ok(estadoReservasDTOs);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<EstadoReservaDTO>> GetEstadoReserva(int id)
         {
-            var estadoReserva = await _context.EstadoReserva.FindAsync(id);
+            var estadoReserva = await _context.EstadoReserva.Where(e => e.Activo && e.Id == id).FirstOrDefaultAsync();
 
             if (estadoReserva == null)
             {

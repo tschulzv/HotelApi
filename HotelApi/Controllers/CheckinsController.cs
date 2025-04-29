@@ -26,6 +26,7 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<CheckinDTO>>> GetCheckin()
         {
             var checkins = await _context.Checkin
+                .Where(c => c.Activo)
                 .Include(c => c.DetalleHuespedes) // Asegúrate de incluir las navegaciones necesarias
                     .ThenInclude(dh => dh.Nombre)
                 .ToListAsync();
@@ -38,6 +39,7 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<CheckinDTO>> GetCheckin(int id)
         {
             var checkin = await _context.Checkin
+                .Where(c => c.Activo)
                 .Include(c => c.DetalleHuespedes)
                     .ThenInclude(dh => dh.Nombre)
                 .FirstOrDefaultAsync(c => c.Id == id);  

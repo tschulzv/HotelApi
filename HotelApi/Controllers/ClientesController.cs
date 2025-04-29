@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ClienteDTO>>> GetCliente()
         {
-            var clientes = await _context.Cliente.ToListAsync();
+            var clientes = await _context.Cliente.Where(c => c.Activo).ToListAsync();
             var clientesDTOs = clientes.Select(c => ToDTO(c)).ToList();
             return Ok(clientesDTOs);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ClienteDTO>> GetCliente(int id)
         {
-            var cliente = await _context.Cliente.FindAsync(id);
+            var cliente = await _context.Cliente.Where(c => c.Activo && c.Id == id).FirstOrDefaultAsync();
 
             if (cliente == null)
             {

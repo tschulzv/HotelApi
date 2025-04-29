@@ -25,7 +25,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CheckoutDTO>>> GetCheckout()
         {
-            var checkouts = await _context.Checkout.ToListAsync();
+            var checkouts = await _context.Checkout.Where(c => c.Activo).ToListAsync();
             var checkoutsDTOs = checkouts.Select(c => ToDTO(c)).ToList();
             return Ok(checkoutsDTOs);
         }
@@ -34,7 +34,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CheckoutDTO>> GetCheckout(int id)
         {
-            var checkout = await _context.Checkout.FindAsync(id);
+            var checkout = await _context.Checkout.Where(c => c.Activo && c.Id == id).FirstOrDefaultAsync();
 
             if (checkout == null)
             {

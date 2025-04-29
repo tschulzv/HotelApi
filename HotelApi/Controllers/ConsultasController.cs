@@ -24,7 +24,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ConsultaDTO>>> GetConsulta()
         {
-            var consultas = await _context.Consulta.ToListAsync();
+            var consultas = await _context.Consulta.Where(c => c.Activo).ToListAsync();
             return consultas.Select(ToDTO).ToList();
         }
 
@@ -32,7 +32,8 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ConsultaDTO>> GetConsulta(int id)
         {
-            var consulta = await _context.Consulta.FindAsync(id);
+           
+            var consulta = await _context.Consulta.Where(c => c.Activo && c.Id == id).FirstOrDefaultAsync();
 
             if (consulta == null)
             {
