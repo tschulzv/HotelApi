@@ -26,10 +26,9 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<CheckinDTO>>> GetCheckin()
         {
             var checkins = await _context.Checkin
-                .Where(c => c.Activo)
-                .Include(c => c.DetalleHuespedes) // Asegúrate de incluir las navegaciones necesarias
-                    .ThenInclude(dh => dh.Nombre)
-                .ToListAsync();
+            .Where(c => c.Activo)
+            .Include(c => c.DetalleHuespedes)
+            .ToListAsync();
             var checkInsDTO = checkins.Select(c => ToDTO(c)).ToList();
             return Ok(checkInsDTO);
         }
@@ -39,10 +38,9 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<CheckinDTO>> GetCheckin(int id)
         {
             var checkin = await _context.Checkin
-                .Where(c => c.Activo)
-                .Include(c => c.DetalleHuespedes)
-                    .ThenInclude(dh => dh.Nombre)
-                .FirstOrDefaultAsync(c => c.Id == id);  
+            .Where(c => c.Activo)
+            .Include(c => c.DetalleHuespedes)
+            .FirstOrDefaultAsync(c => c.Id == id);
 
             if (checkin == null)
             {

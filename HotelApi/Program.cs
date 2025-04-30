@@ -14,6 +14,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Ejecutar el seed de datos
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<HotelApiContext>();
+    DbInitializer.Seed(context);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
