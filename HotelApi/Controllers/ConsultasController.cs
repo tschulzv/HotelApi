@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ConsultasController : ControllerBase
     {
         private readonly HotelApiContext _context;

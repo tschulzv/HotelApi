@@ -16,7 +16,7 @@ namespace HotelApi.Models
         public string Username { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [StringLength(100)]
         public string HashContrasenha { get; set; }
 
         public DateTime? UltimoLogin { get; set; }

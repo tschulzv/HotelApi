@@ -8,11 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
 using System.Runtime.ConstrainedExecution;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ServiciosController : ControllerBase
     {
         private readonly HotelApiContext _context;
