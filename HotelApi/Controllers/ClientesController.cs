@@ -59,15 +59,15 @@ namespace HotelApi.Controllers
             {
                 return NotFound();
             }
-            cliente.Nombre = cliente.Nombre;
-            cliente.Apellido = cliente.Apellido;
-            cliente.Email = cliente.Email;
-            cliente.Telefono = cliente.Telefono;
-            cliente.NumDocumento = cliente.NumDocumento;
-            cliente.TipoDocumentoId = cliente.TipoDocumentoId;
-            cliente.Nacionalidad = cliente.Nacionalidad;
-            cliente.Comentarios = cliente.Comentarios;
-            cliente.Activo = cliente.Activo;
+            cliente.Nombre = clienteDTO.Nombre;
+            cliente.Apellido = clienteDTO.Apellido;
+            cliente.Email = clienteDTO.Email;
+            cliente.Telefono = clienteDTO.Telefono;
+            cliente.NumDocumento = clienteDTO.NumDocumento;
+            cliente.TipoDocumentoId = clienteDTO.TipoDocumentoId;
+            cliente.Nacionalidad = clienteDTO.Nacionalidad;
+            cliente.Comentarios = clienteDTO.Comentarios;
+            cliente.Activo = clienteDTO.Activo;
             cliente.Actualizacion = DateTime.Now;
             _context.Entry(cliente).State = EntityState.Modified;
 
