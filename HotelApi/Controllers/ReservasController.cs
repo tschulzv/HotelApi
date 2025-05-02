@@ -128,7 +128,7 @@ namespace HotelApi.Controllers
         // POST: api/Reservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ReservaDTO>> PostReserva(ReservaDTO resDto)
+        public async Task<ActionResult<ReservaDTO>> PostReserva([FromBody]ReservaDTO resDto)
         {
             if (!ModelState.IsValid)
             {
