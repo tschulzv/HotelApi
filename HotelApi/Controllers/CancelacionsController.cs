@@ -95,20 +95,42 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<Cancelacion>> PostCancelacion(CancelacionDTO caDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
-            var cancelacion = new Cancelacion {
-                DetalleReservaId = caDto.DetalleReservaId,
-                Motivo = caDto.Motivo,
-                Creacion = DateTime.Now,
-                Actualizacion = DateTime.Now,
-                Activo = true
-            };
-            _context.Cancelacion.Add(cancelacion);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCancelacion", new { id = cancelacion.Id }, caDto);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Crear la cancelación
+                var cancelacion = new Cancelacion
+                {
+                    DetalleReservaId = caDto.DetalleReservaId,
+                    Motivo = caDto.Motivo,
+                    Creacion = DateTime.Now,
+                    Actualizacion = DateTime.Now,
+                    Activo = true
+                };
+
+                _context.Cancelacion.Add(cancelacion);
+
+                // Inactivar el detalle de reserva
+                var detalle = await _context.DetalleReserva.FindAsync(caDto.DetalleReservaId);
+                if (detalle == null)
+                    return NotFound($"No se encontró el DetalleReserva con ID {caDto.DetalleReservaId}");
+
+                detalle.Activo = false;
+                detalle.Actualizacion = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return CreatedAtAction("GetCancelacion", new { id = cancelacion.Id }, ToDTO(cancelacion));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Error al cancelar: {ex.Message}");
+            }
         }
 
         // DELETE: api/Cancelacions/5

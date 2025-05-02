@@ -28,7 +28,11 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservas()
         {
             // obtener solo los activos
-            var res = await _context.Reserva.Where(r => r.Activo).ToListAsync();
+            var res = await _context.Reserva
+            .Where(r => r.Activo)
+            .Include(r => r.Detalles)
+            .ToListAsync();
+
             var resDtos = res.Select(r => ToDTO(r));
             return Ok(resDtos);
         }
@@ -37,7 +41,10 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ReservaDTO>> GetReserva(int id)
         {
-            var reserva = await _context.Reserva.Where(r => r.Activo && r.Id == id).FirstOrDefaultAsync();
+            var reserva = await _context.Reserva
+            .Include(r => r.Detalles) // 👈 Agregá esto también
+            .Where(r => r.Activo && r.Id == id)
+            .FirstOrDefaultAsync();
 
             if (reserva == null)
             {
@@ -130,7 +137,7 @@ namespace HotelApi.Controllers
         // POST: api/Reservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ReservaDTO>> PostReserva(ReservaDTO resDto)
+        public async Task<ActionResult<ReservaDTO>> PostReserva([FromBody]ReservaDTO resDto)
         {
             if (!ModelState.IsValid)
             {
