@@ -63,7 +63,7 @@ namespace HotelApi.Controllers
 
             habitacion.TipoHabitacionId = habitacionDTO.TipoHabitacionId;
             habitacion.NumeroHabitacion = habitacionDTO.NumeroHabitacion;
-            habitacion.Disponible = habitacionDTO.Disponible;
+            habitacion.EstadoHabitacionId= habitacionDTO.EstadoHabitacionId;
             habitacion.Activo = habitacionDTO.Activo;
             habitacion.Actualizacion = DateTime.Now; // Actualizar la fecha de actualización
 
@@ -97,7 +97,7 @@ namespace HotelApi.Controllers
             {
                 TipoHabitacionId = habitacionDTO.TipoHabitacionId,
                 NumeroHabitacion = habitacionDTO.NumeroHabitacion,
-                Disponible = habitacionDTO.Disponible,
+                EstadoHabitacionId = habitacionDTO.EstadoHabitacionId,
                 Activo = habitacionDTO.Activo,
                 Creacion = DateTime.Now,       // Establecer la fecha de creación
                 Actualizacion = DateTime.Now    // Establecer la fecha de actualización
@@ -137,7 +137,7 @@ namespace HotelApi.Controllers
                 Id = habitacion.Id,
                 TipoHabitacionId = habitacion.TipoHabitacionId,
                 NumeroHabitacion = habitacion.NumeroHabitacion,
-                Disponible = habitacion.Disponible,
+                EstadoHabitacionId = habitacion.EstadoHabitacionId,
                 Activo = habitacion.Activo
             };
         }

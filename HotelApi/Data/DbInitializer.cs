@@ -124,7 +124,17 @@ namespace HotelApi.Data
             };
             context.Cliente.AddRange(clientes);
             context.SaveChanges();
+            // Seed EstadoHabitacion
 
+            var estadoHabitaciones = new List<EstadoHabitacion>
+            {
+                new EstadoHabitacion {Nombre = "DISPONIBLE", Creacion = now, Actualizacion = now, Activo = true },
+                new EstadoHabitacion {Nombre = "OCUPADO", Creacion = now, Actualizacion = now, Activo = true },
+                new EstadoHabitacion {Nombre = "EN LIMPIEZA", Creacion = now, Actualizacion = now, Activo = true},
+                new EstadoHabitacion {Nombre = "LATE-CHECKOUT", Creacion = now, Actualizacion = now, Activo = true}
+            };
+            context.EstadoHabitacion.AddRange(estadoHabitaciones);
+            context.SaveChanges();
             // Seed Habitaciones
             var habitaciones = new List<Habitacion>
             {
@@ -132,7 +142,7 @@ namespace HotelApi.Data
                 {
                     TipoHabitacionId = tiposHabitacion[0].Id,
                     NumeroHabitacion = 101,
-                    Disponible = true,
+                    EstadoHabitacionId = 1,
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
@@ -141,7 +151,7 @@ namespace HotelApi.Data
                 {
                     TipoHabitacionId = tiposHabitacion[0].Id,
                     NumeroHabitacion = 102,
-                    Disponible = true,
+                    EstadoHabitacionId = 1,
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
@@ -150,7 +160,7 @@ namespace HotelApi.Data
                 {
                     TipoHabitacionId = tiposHabitacion[1].Id,
                     NumeroHabitacion = 201,
-                    Disponible = true,
+                    EstadoHabitacionId = 1,
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true

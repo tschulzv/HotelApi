@@ -18,8 +18,10 @@ namespace HotelApi.Models
         [Range(100,1000)]
         public int NumeroHabitacion { get; set; }
 
+        //cambie en vez de bool Disponible
         [Required]
-        public bool Disponible { get; set; } = true;
+        public int EstadoHabitacionId { get; set; }
+        public EstadoHabitacion EstadoHabitacion { get; set; }
 
         // falta lo de tamaño y capacidad
 
