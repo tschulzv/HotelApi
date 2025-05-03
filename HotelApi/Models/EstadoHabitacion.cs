@@ -1,18 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HotelApi.Models
 {
-    public class EstadoReserva
+    public class EstadoHabitacion
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string Nombre { get; set; }
+        [MaxLength(50)]
+        public string Nombre { get; set; }  // Ej: "DISPONIBLE", "OCUPADO"
 
         [Required]
         [DataType(DataType.Date)]
@@ -26,8 +25,7 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
-
-        public ICollection<Reserva> Reservas { get; set; }
-
+        public ICollection<Habitacion> Habitaciones { get; set; }
     }
 }
+

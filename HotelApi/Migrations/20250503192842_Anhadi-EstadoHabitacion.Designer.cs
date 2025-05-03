@@ -4,6 +4,7 @@ using HotelApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelApi.Migrations
 {
     [DbContext(typeof(HotelApiContext))]
-    partial class HotelApiContextModelSnapshot : ModelSnapshot
+    [Migration("20250503192842_Anhadi-EstadoHabitacion")]
+    partial class AnhadiEstadoHabitacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -307,15 +310,6 @@ namespace HotelApi.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Actualizacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Creacion")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
