@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace HotelApi.Controllers
 {
@@ -114,13 +115,31 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> DeleteConsulta(int id)
         {
             var consulta = await _context.Consulta.FindAsync(id);
-            if (consulta == null)
+            if (consulta == null || !consulta.Activo)
             {
                 return NotFound();
             }
 
-            _context.Consulta.Remove(consulta);
-            await _context.SaveChangesAsync();
+            consulta.Activo = false;
+            consulta.Actualizacion = DateTime.Now;
+
+            _context.Entry(consulta).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ConsultaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }

@@ -138,13 +138,31 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> DeleteCancelacion(int id)
         {
             var cancelacion = await _context.Cancelacion.FindAsync(id);
-            if (cancelacion == null)
+            if (cancelacion == null || !cancelacion.Activo)
             {
                 return NotFound();
             }
 
-            _context.Cancelacion.Remove(cancelacion);
-            await _context.SaveChangesAsync();
+            cancelacion.Activo = false;
+            cancelacion.Actualizacion = DateTime.Now;
+
+            _context.Entry(cancelacion).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CancelacionExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }

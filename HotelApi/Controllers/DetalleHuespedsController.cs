@@ -115,13 +115,31 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> DeleteDetalleHuesped(int id)
         {
             var detalleHuesped = await _context.DetalleHuesped.FindAsync(id);
-            if (detalleHuesped == null)
+            if (detalleHuesped == null || !detalleHuesped.Activo)
             {
                 return NotFound();
             }
 
-            _context.DetalleHuesped.Remove(detalleHuesped);
-            await _context.SaveChangesAsync();
+            detalleHuesped.Activo = false;
+            detalleHuesped.Actualizacion = DateTime.Now;
+
+            _context.Entry(detalleHuesped).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!DetalleHuespedExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
