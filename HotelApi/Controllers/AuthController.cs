@@ -46,7 +46,10 @@ namespace HotelApi.Controllers
             {
                 Username = model.Username,
                 Nombre = model.Nombre,
-                HashContrasenha = passwordHash
+                HashContrasenha = passwordHash,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
             };
 
             _context.Usuario.Add(user);
