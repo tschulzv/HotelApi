@@ -123,13 +123,31 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> DeleteCliente(int id)
         {
             var cliente = await _context.Cliente.FindAsync(id);
-            if (cliente == null)
+            if (cliente == null || !cliente.Activo)
             {
                 return NotFound();
             }
 
-            _context.Cliente.Remove(cliente);
-            await _context.SaveChangesAsync();
+            cliente.Activo = false;
+            cliente.Actualizacion = DateTime.Now;
+
+            _context.Entry(cliente).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ClienteExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }

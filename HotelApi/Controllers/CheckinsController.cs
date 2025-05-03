@@ -161,13 +161,31 @@ namespace HotelApi.Controllers
         public async Task<IActionResult> DeleteCheckin(int id)
         {
             var checkin = await _context.Checkin.FindAsync(id);
-            if (checkin == null)
+            if (checkin == null || !checkin.Activo)
             {
                 return NotFound();
             }
 
-            _context.Checkin.Remove(checkin);
-            await _context.SaveChangesAsync();
+            checkin.Activo = false;
+            checkin.Actualizacion = DateTime.Now;
+
+            _context.Entry(checkin).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CheckinExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
