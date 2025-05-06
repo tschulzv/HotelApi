@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace HotelApi.Models
+namespace HotelApi.DTOs
 {
     public class SolicitudDTO
     {

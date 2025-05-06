@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
+using HotelApi.DTOs;
 
 namespace HotelApi.Controllers
 {
@@ -72,6 +73,8 @@ namespace HotelApi.Controllers
             tipo.Descripcion = tipoDto.Descripcion;
             tipo.PrecioBase = tipoDto.PrecioBase;
             tipo.CantidadDisponible = tipoDto.CantidadDisponible;
+            tipo.MaximaOcupacion = tipoDto.MaximaOcupacion;
+            tipo.Tamanho = tipoDto.Tamanho;
             tipo.Actualizacion = DateTime.Now;
 
             // Sincronizar lista de servicios
@@ -124,6 +127,8 @@ namespace HotelApi.Controllers
                 Descripcion = tipoDto.Descripcion,
                 PrecioBase = tipoDto.PrecioBase,
                 CantidadDisponible = tipoDto.CantidadDisponible,
+                MaximaOcupacion = tipoDto.MaximaOcupacion,
+                Tamanho = tipoDto.Tamanho,
                 Servicios = new System.Collections.ObjectModel.Collection<Servicio>(
                     tipoDto.Servicios?.Select(dto => new Servicio
                     {
@@ -187,6 +192,8 @@ namespace HotelApi.Controllers
                 Descripcion = tipo.Descripcion,
                 PrecioBase = tipo.PrecioBase,
                 CantidadDisponible = tipo.CantidadDisponible,
+                MaximaOcupacion = tipo.MaximaOcupacion,
+                Tamanho = tipo.Tamanho,
                 Servicios = tipo.Servicios?.Select(s => new ServicioDTO
                 {
                     Id = s.Id,

@@ -1,14 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace HotelApi.Models
+namespace HotelApi.DTOs
 {
     public class TipoDocumentoDTO
     {
         public int Id { get; set; }
-
-        [Required]
-        [StringLength(50)]
         public string Nombre { get; set; }
 
     }
