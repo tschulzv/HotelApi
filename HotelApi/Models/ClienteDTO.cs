@@ -14,6 +14,8 @@
 
         public string NumDocumento { get; set; }
 
+        public string? Ruc { get; set; }
+
         public int TipoDocumentoId { get; set; }
 
         public string Nacionalidad { get; set; }

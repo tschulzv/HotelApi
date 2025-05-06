@@ -54,6 +54,26 @@ namespace HotelApi.Controllers
             return ToDTO(reserva);
         }
 
+        // obtener ultima reserva de un cliente con determinado id
+        // GET: api/Reservas/cliente/5/ultima
+        [HttpGet("cliente/{clienteId}/ultima")]
+
+        public async Task<ActionResult<ReservaDTO>> GetUltimaReserva(int clienteId)
+        {
+            var reserva = await _context.Reserva
+            .Where(r => r.ClienteId == clienteId && r.Activo)
+            .OrderByDescending(r => r.FechaIngreso)
+            .Include(r => r.Detalles)
+            .FirstOrDefaultAsync();
+
+            if (reserva == null)
+            {
+                return NotFound();
+            }
+
+            return ToDTO(reserva);
+        }
+
         // PUT: api/Reservas/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

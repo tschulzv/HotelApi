@@ -4,6 +4,7 @@ using HotelApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelApi.Migrations
 {
     [DbContext(typeof(HotelApiContext))]
-    partial class HotelApiContextModelSnapshot : ModelSnapshot
+    [Migration("20250503213248_xd")]
+    partial class xd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -136,6 +139,7 @@ namespace HotelApi.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Comentarios")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -159,10 +163,6 @@ namespace HotelApi.Migrations
 
                     b.Property<string>("NumDocumento")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Ruc")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -374,7 +374,7 @@ namespace HotelApi.Migrations
                     b.Property<DateTime>("Creacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("EstadoHabitacionId")
+                    b.Property<int?>("EstadoHabitacionId")
                         .HasColumnType("int");
 
                     b.Property<int>("NumeroHabitacion")
@@ -785,19 +785,15 @@ namespace HotelApi.Migrations
 
             modelBuilder.Entity("HotelApi.Models.Habitacion", b =>
                 {
-                    b.HasOne("HotelApi.Models.EstadoHabitacion", "EstadoHabitacion")
+                    b.HasOne("HotelApi.Models.EstadoHabitacion", null)
                         .WithMany("Habitaciones")
-                        .HasForeignKey("EstadoHabitacionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("EstadoHabitacionId");
 
                     b.HasOne("HotelApi.Models.TipoHabitacion", "TipoHabitacion")
                         .WithMany("Habitaciones")
                         .HasForeignKey("TipoHabitacionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("EstadoHabitacion");
 
                     b.Navigation("TipoHabitacion");
                 });

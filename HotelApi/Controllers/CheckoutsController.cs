@@ -95,7 +95,7 @@ namespace HotelApi.Controllers
             {
                 Id = checkoutDTO.Id,
                 ReservaId = checkoutDTO.ReservaId,
-                Activo = checkoutDTO.Activo
+                Activo = true
             };
             _context.Checkout.Add(checkout);
             await _context.SaveChangesAsync();

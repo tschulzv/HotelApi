@@ -40,6 +40,7 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Logging.AddConsole();
 
 // Add services to the container.
 
@@ -50,13 +51,28 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Ejecutar el seed de datos
+
+/* Ejecutar el seed de datos
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<HotelApiContext>();
     DbInitializer.Seed(context);
+}*/
+// aplicar migraciones y seeding
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<HotelApiContext>();
+
+    if (context.Database.IsRelational())
+    {
+        context.Database.Migrate();
+    }
+
+    DbInitializer.Seed(context);
 }
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

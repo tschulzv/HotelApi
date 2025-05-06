@@ -133,7 +133,7 @@ namespace HotelApi.Controllers
             var checkin = new Checkin
             {
                 ReservaId = checkinDTO.ReservaId,
-                Activo = checkinDTO.Activo,
+                Activo = true,
                 DetalleHuespedes = new System.Collections.ObjectModel.Collection<DetalleHuesped>(
                     checkinDTO.DetalleHuespedes?.Select(dto => new DetalleHuesped
                     {

@@ -36,12 +36,15 @@ namespace HotelApi.Models
 
         public TipoDocumento TipoDocumento { get; set; }
 
+        [StringLength(50, MinimumLength = 5)]
+        public string? Ruc { get; set; }
+
         [Required]
         [StringLength(50)]
         public string Nacionalidad { get; set; }
 
         [StringLength(256)]
-        public string Comentarios { get; set; }
+        public string? Comentarios { get; set; }
 
         [Required]
         [DataType(DataType.Date)]

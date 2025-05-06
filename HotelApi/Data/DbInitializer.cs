@@ -9,6 +9,9 @@ namespace HotelApi.Data
         {
             context.Database.EnsureCreated();
 
+            var now = DateTime.Now;
+         
+
             // Verificamos si ya existen datos
             if (context.Servicio.Any() ||
                 context.TipoDocumento.Any() ||
@@ -19,7 +22,6 @@ namespace HotelApi.Data
                 return;
             }
 
-            var now = DateTime.Now;
 
             // Seed Servicios
             var servicios = new List<Servicio>
@@ -124,7 +126,7 @@ namespace HotelApi.Data
             };
             context.Cliente.AddRange(clientes);
             context.SaveChanges();
-            // Seed EstadoHabitacion
+            //Seed EstadoHabitacion
 
             var estadoHabitaciones = new List<EstadoHabitacion>
             {

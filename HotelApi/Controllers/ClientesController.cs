@@ -67,6 +67,7 @@ namespace HotelApi.Controllers
             cliente.Telefono = clienteDTO.Telefono;
             cliente.NumDocumento = clienteDTO.NumDocumento;
             cliente.TipoDocumentoId = clienteDTO.TipoDocumentoId;
+            cliente.Ruc = clienteDTO.Ruc;
             cliente.Nacionalidad = clienteDTO.Nacionalidad;
             cliente.Comentarios = clienteDTO.Comentarios;
             cliente.Activo = clienteDTO.Activo;
@@ -99,13 +100,13 @@ namespace HotelApi.Controllers
         {
             var cliente = new Cliente
             {
-                Id = clienteDTO.Id, // Considera si el ID debe ser generado por la base de datos
                 Nombre = clienteDTO.Nombre,
                 Apellido = clienteDTO.Apellido,
                 Email = clienteDTO.Email,
                 Telefono = clienteDTO.Telefono,
                 NumDocumento = clienteDTO.NumDocumento,
                 TipoDocumentoId = clienteDTO.TipoDocumentoId,
+                Ruc = clienteDTO.Ruc,
                 Nacionalidad = clienteDTO.Nacionalidad,
                 Comentarios = clienteDTO.Comentarios,
                 Creacion = DateTime.Now,

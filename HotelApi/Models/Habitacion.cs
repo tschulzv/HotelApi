@@ -10,7 +10,6 @@ namespace HotelApi.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
         public int TipoHabitacionId{ get; set; }
         public TipoHabitacion TipoHabitacion { get; set; }
 
