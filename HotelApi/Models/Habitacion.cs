@@ -22,7 +22,8 @@ namespace HotelApi.Models
         public int EstadoHabitacionId { get; set; }
         public EstadoHabitacion EstadoHabitacion { get; set; }
 
-        // falta lo de tamaño y capacidad
+        [Column(TypeName = "nvarchar(MAX)")]
+        public string Observaciones { get; set; }
 
         [Required]
         [DataType(DataType.Date)]

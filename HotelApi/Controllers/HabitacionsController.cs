@@ -27,22 +27,51 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<HabitacionDTO>>> GetHabitacion()
         {
-            var habitaciones = await _context.Habitacion.Where(h => h.Activo).ToListAsync();
-            return habitaciones.Select(ToDTO).ToList();
+            var habitaciones = await _context.Habitacion
+            .Include(h => h.EstadoHabitacion)
+            .Include(h => h.TipoHabitacion)
+            .Select(h => new HabitacionDTO
+            {
+                Id = h.Id,
+                NumeroHabitacion = h.NumeroHabitacion,
+                TipoHabitacionId = h.TipoHabitacionId,
+                TipoHabitacionNombre = h.TipoHabitacion.Nombre,
+                EstadoHabitacionId = h.EstadoHabitacionId,
+                EstadoNombre = h.EstadoHabitacion.Nombre,
+                Observaciones = h.Observaciones,
+                Activo = h.Activo
+            })
+            .ToListAsync();
+            return Ok(habitaciones);
         }
 
         // GET: api/Habitacions/5
         [HttpGet("{id}")]
         public async Task<ActionResult<HabitacionDTO>> GetHabitacion(int id)
         {
-            var habitacion = await _context.Habitacion.Where(h => h.Activo && h.Id == id).FirstOrDefaultAsync();
+            var habitacion = await _context.Habitacion
+            .Include(h => h.EstadoHabitacion)
+            .Include(h => h.TipoHabitacion)
+            .Where(h => h.Id == id)
+            .Select(h => new HabitacionDTO
+            {
+                Id = h.Id,
+                NumeroHabitacion = h.NumeroHabitacion,
+                EstadoHabitacionId = h.EstadoHabitacionId,
+                EstadoNombre = h.EstadoHabitacion.Nombre,
+                TipoHabitacionId = h.TipoHabitacionId,
+                TipoHabitacionNombre = h.TipoHabitacion.Nombre,
+                Observaciones = h.Observaciones,
+                Activo = h.Activo
+            })
+            .FirstOrDefaultAsync();
 
             if (habitacion == null)
             {
                 return NotFound();
             }
 
-            return ToDTO(habitacion);
+            return habitacion;
         }
 
         // PUT: api/Habitacions/5
@@ -64,6 +93,7 @@ namespace HotelApi.Controllers
             habitacion.TipoHabitacionId = habitacionDTO.TipoHabitacionId;
             habitacion.NumeroHabitacion = habitacionDTO.NumeroHabitacion;
             habitacion.EstadoHabitacionId= habitacionDTO.EstadoHabitacionId;
+            habitacion.Observaciones = habitacionDTO.Observaciones;
             habitacion.Activo = habitacionDTO.Activo;
             habitacion.Actualizacion = DateTime.Now; // Actualizar la fecha de actualización
 
@@ -98,6 +128,7 @@ namespace HotelApi.Controllers
                 TipoHabitacionId = habitacionDTO.TipoHabitacionId,
                 NumeroHabitacion = habitacionDTO.NumeroHabitacion,
                 EstadoHabitacionId = habitacionDTO.EstadoHabitacionId,
+                Observaciones = habitacionDTO.Observaciones,
                 Activo = habitacionDTO.Activo,
                 Creacion = DateTime.Now,       // Establecer la fecha de creación
                 Actualizacion = DateTime.Now    // Establecer la fecha de actualización
@@ -156,6 +187,7 @@ namespace HotelApi.Controllers
                 TipoHabitacionId = habitacion.TipoHabitacionId,
                 NumeroHabitacion = habitacion.NumeroHabitacion,
                 EstadoHabitacionId = habitacion.EstadoHabitacionId,
+                Observaciones = habitacion.Observaciones,
                 Activo = habitacion.Activo
             };
         }
