@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelApi.Data;
 using HotelApi.Models;
+using HotelApi.DTOs;
 
 namespace HotelApi.Controllers
 {

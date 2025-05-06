@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BCrypt.Net;
 using System;
+using HotelApi.DTOs.Auth;
 
 namespace HotelApi.Controllers
 {

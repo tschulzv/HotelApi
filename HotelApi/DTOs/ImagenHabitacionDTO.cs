@@ -1,16 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace HotelApi.Models
+namespace HotelApi.DTOs
 {
     public class ImagenHabitacionDTO
     {
         public int Id { get; set; }
-
-        [Required]
         public int TipoHabitacionId { get; set; }
-
-        [Required]
         public byte[] Imagen { get; set; }
 
     }

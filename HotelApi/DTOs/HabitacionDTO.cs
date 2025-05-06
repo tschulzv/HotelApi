@@ -1,4 +1,4 @@
-﻿namespace HotelApi.Models
+﻿namespace HotelApi.DTOs
 {
     public class HabitacionDTO
     {

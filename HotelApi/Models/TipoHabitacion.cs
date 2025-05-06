@@ -26,6 +26,13 @@ namespace HotelApi.Models
         public int CantidadDisponible {  get; set; }
 
         [Required]
+        [Range(1, 6)]
+        public int MaximaOcupacion { get; set; }
+        [Required]
+        [Range(1, 1000)]
+        public int Tamanho { get; set; }
+
+        [Required]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Creacion { get; set; }
