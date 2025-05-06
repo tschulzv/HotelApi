@@ -54,10 +54,28 @@ namespace HotelApi.Controllers
             return ToDTO(reserva);
         }
 
+        //obtener reservas de un cliente con determinado id
+        // GET: api/Reservas/cliente/5
+        [HttpGet("cliente/{clienteId}")]
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservasCliente(int clienteId)
+        {
+            var res = await _context.Reserva
+            .Where(r => r.ClienteId == clienteId && r.Activo)
+            .OrderByDescending(r => r.FechaIngreso)
+            .Include(r => r.Detalles)
+            .ToListAsync();
+
+            if (res == null)
+            {
+                return NotFound();
+            }
+
+            var resDtos = res.Select(r => ToDTO(r));
+            return Ok(resDtos);
+        }
         // obtener ultima reserva de un cliente con determinado id
         // GET: api/Reservas/cliente/5/ultima
         [HttpGet("cliente/{clienteId}/ultima")]
-
         public async Task<ActionResult<ReservaDTO>> GetUltimaReserva(int clienteId)
         {
             var reserva = await _context.Reserva
