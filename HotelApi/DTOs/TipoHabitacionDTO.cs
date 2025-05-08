@@ -12,6 +12,6 @@ namespace HotelApi.DTOs
         public int CantidadDisponible { get; set; }
         public int MaximaOcupacion { get; set; }
         public int Tamanho { get; set; }
-        public ICollection<ServicioDTO>? Servicios { get; set; }
+        public List<ServicioDTO> Servicios { get; set; } = new List<ServicioDTO>();
     }
 }
