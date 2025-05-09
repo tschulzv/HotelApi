@@ -23,5 +23,7 @@
         public string Comentarios { get; set; }
 
         public bool Activo { get; set; }
+
+        public DateTime Creacion {  get; set; }
     }
 }
