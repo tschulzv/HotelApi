@@ -172,7 +172,8 @@ namespace HotelApi.Controllers
                 TipoDocumentoId = cliente.TipoDocumentoId,
                 Nacionalidad = cliente.Nacionalidad,
                 Comentarios = cliente.Comentarios,
-                Activo = cliente.Activo
+                Activo = cliente.Activo,
+                Creacion = cliente.Creacion,
             };
         }
     }

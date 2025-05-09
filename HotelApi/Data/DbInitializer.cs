@@ -145,6 +145,7 @@ namespace HotelApi.Data
                     TipoHabitacionId = tiposHabitacion[0].Id,
                     NumeroHabitacion = 101,
                     EstadoHabitacionId = 1,
+                    Observaciones="prueba1",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
@@ -154,6 +155,7 @@ namespace HotelApi.Data
                     TipoHabitacionId = tiposHabitacion[0].Id,
                     NumeroHabitacion = 102,
                     EstadoHabitacionId = 1,
+                    Observaciones="prueba2",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
@@ -163,6 +165,7 @@ namespace HotelApi.Data
                     TipoHabitacionId = tiposHabitacion[1].Id,
                     NumeroHabitacion = 201,
                     EstadoHabitacionId = 1,
+                    Observaciones="prueba3",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
