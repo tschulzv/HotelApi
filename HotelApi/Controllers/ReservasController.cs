@@ -59,6 +59,25 @@ namespace HotelApi.Controllers
             return ToDTO(reserva);
         }
 
+        //obtener reserva con determinado codigo
+        // GET: api/Reservas/RES001
+        [HttpGet("{codigo}")]
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReserva(string codigo)
+        {
+            var res = await _context.Reserva
+            .Where(r => r.Codigo == codigo && r.EstadoId == 1)
+            .Include(r => r.Detalles)
+            .ToListAsync();
+
+            if (res == null)
+            {
+                return NotFound();
+            }
+
+            var resDtos = res.Select(r => ToDTO(r));
+            return Ok(resDtos);
+        }
+
         //obtener reservas de un cliente con determinado id
         // GET: api/Reservas/cliente/5
         [HttpGet("cliente/{clienteId}")]

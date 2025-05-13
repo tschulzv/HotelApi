@@ -145,10 +145,19 @@ namespace HotelApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHabitacion(int id)
         {
-            var habitacion = await _context.Habitacion.FindAsync(id);
+            var habitacion = await _context.Habitacion
+                .Include(h => h.DetalleReservas) // Si tienes esta relación
+                .FirstOrDefaultAsync(h => h.Id == id);
+
             if (habitacion == null || !habitacion.Activo)
             {
                 return NotFound();
+            }
+
+            // Validar si hay reservas activas asociadas
+            if (habitacion.DetalleReservas != null && habitacion.DetalleReservas.Any(dr => dr.Activo))
+            {
+                return BadRequest("No se puede eliminar la habitación porque tiene reservas activas asociadas.");
             }
 
             habitacion.Activo = false;
