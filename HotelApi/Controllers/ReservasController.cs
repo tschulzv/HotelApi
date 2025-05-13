@@ -32,6 +32,7 @@ namespace HotelApi.Controllers
             var res = await _context.Reserva
             .Where(r => r.Activo)
             .Include(r => r.Detalles)
+                .ThenInclude(d => d.Habitacion)
             .Include(r => r.Cliente)
             .ToListAsync();
 
@@ -45,6 +46,7 @@ namespace HotelApi.Controllers
         {
             var reserva = await _context.Reserva
             .Include(r => r.Detalles)
+                .ThenInclude (d => d.Habitacion)
             .Include(r => r.Cliente)
             .Where(r => r.Activo && r.Id == id)
             .FirstOrDefaultAsync();
@@ -274,6 +276,7 @@ namespace HotelApi.Controllers
                     Id = d.Id,
                     ReservaId = d.ReservaId,
                     HabitacionId = d.HabitacionId,
+                    NumeroHabitacion = d.Habitacion?.NumeroHabitacion,
                     CantidadAdultos = d.CantidadAdultos,
                     CantidadNinhos = d.CantidadNinhos,
                     PensionId = d.PensionId,
