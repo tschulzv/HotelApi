@@ -8,6 +8,8 @@
 
         public int? HabitacionId { get; set; }
 
+        public int? NumHabitacion { get; set; }
+
         public int CantidadAdultos { get; set; }
 
         public int CantidadNinhos { get; set; }

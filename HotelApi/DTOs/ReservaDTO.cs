@@ -8,6 +8,7 @@ namespace HotelApi.DTOs
         public int Id { get; set; }
 
         public int ClienteId { get; set; }
+        public string? NombreCliente { get; set; }
         public string Codigo { get; set; }
 
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]

@@ -32,6 +32,7 @@ namespace HotelApi.Controllers
             var res = await _context.Reserva
             .Where(r => r.Activo)
             .Include(r => r.Detalles)
+            .Include(r => r.Cliente)
             .ToListAsync();
 
             var resDtos = res.Select(r => ToDTO(r));
@@ -43,7 +44,8 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<ReservaDTO>> GetReserva(int id)
         {
             var reserva = await _context.Reserva
-            .Include(r => r.Detalles) // 👈 Agregá esto también
+            .Include(r => r.Detalles)
+            .Include(r => r.Cliente)
             .Where(r => r.Activo && r.Id == id)
             .FirstOrDefaultAsync();
 
@@ -260,6 +262,7 @@ namespace HotelApi.Controllers
             {
                 Id = re.Id,
                 ClienteId = re.ClienteId,
+                NombreCliente = re.Cliente.Nombre + " " + re.Cliente.Apellido,
                 Codigo = re.Codigo,
                 FechaIngreso = re.FechaIngreso,
                 FechaSalida = re.FechaSalida,

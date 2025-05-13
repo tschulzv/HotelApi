@@ -28,7 +28,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DetalleReservaDTO>>> GetDetalleReserva()
         {
-            var detalleReservas = await _context.DetalleReserva.Where(d => d.Activo).ToListAsync();
+            var detalleReservas = await _context.DetalleReserva.Where(d => d.Activo).Include(d => d.Habitacion).ToListAsync();
             return detalleReservas.Select(ToDTO).ToList();
         }
 
@@ -36,7 +36,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<DetalleReservaDTO>> GetDetalleReserva(int id)
         {
-            var detalleReserva = await _context.DetalleReserva.Where(d => d.Activo && d.Id == id).FirstOrDefaultAsync();
+            var detalleReserva = await _context.DetalleReserva.Where(d => d.Activo && d.Id == id).Include(d => d.Habitacion).FirstOrDefaultAsync();
 
             if (detalleReserva == null)
             {
@@ -159,6 +159,7 @@ namespace HotelApi.Controllers
                 Id = detalleReserva.Id,
                 ReservaId = detalleReserva.ReservaId,
                 HabitacionId = detalleReserva.HabitacionId,
+                NumHabitacion = detalleReserva.Habitacion.NumeroHabitacion,
                 CantidadAdultos = detalleReserva.CantidadAdultos,
                 CantidadNinhos = detalleReserva.CantidadNinhos,
                 PensionId = detalleReserva.PensionId,

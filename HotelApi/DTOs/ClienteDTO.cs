@@ -18,6 +18,8 @@
 
         public int TipoDocumentoId { get; set; }
 
+        public string? TipoDocumento { get; set; }
+
         public string Nacionalidad { get; set; }
 
         public string Comentarios { get; set; }
