@@ -8,7 +8,7 @@
 
         public int? HabitacionId { get; set; }
 
-        public int NumHabitacion { get; set; }
+        public int? NumeroHabitacion { get; set; }
 
         public int CantidadAdultos { get; set; }
 
