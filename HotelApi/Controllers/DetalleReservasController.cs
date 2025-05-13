@@ -154,12 +154,13 @@ namespace HotelApi.Controllers
 
         private static DetalleReservaDTO ToDTO(DetalleReserva detalleReserva)
         {
+            Console.WriteLine($"ID: {detalleReserva.Id}, Habitacion: {detalleReserva.Habitacion?.NumeroHabitacion}");
             return new DetalleReservaDTO
             {
                 Id = detalleReserva.Id,
                 ReservaId = detalleReserva.ReservaId,
                 HabitacionId = detalleReserva.HabitacionId,
-                NumHabitacion = detalleReserva.Habitacion.NumeroHabitacion,
+                NumHabitacion = detalleReserva.Habitacion?.NumeroHabitacion,
                 CantidadAdultos = detalleReserva.CantidadAdultos,
                 CantidadNinhos = detalleReserva.CantidadNinhos,
                 PensionId = detalleReserva.PensionId,
