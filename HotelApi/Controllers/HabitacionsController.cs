@@ -9,12 +9,12 @@ using HotelApi.Data;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using HotelApi.DTOs;
+using HotelApi.DTOs.Request;
 
 namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class HabitacionsController : ControllerBase
     {
         private readonly HotelApiContext _context;
@@ -31,6 +31,7 @@ namespace HotelApi.Controllers
             var habitaciones = await _context.Habitacion
             .Include(h => h.EstadoHabitacion)
             .Include(h => h.TipoHabitacion)
+            .Where(h=> h.Activo ==true)
             .Select(h => new HabitacionDTO
             {
                 Id = h.Id,
@@ -53,7 +54,7 @@ namespace HotelApi.Controllers
             var habitacion = await _context.Habitacion
             .Include(h => h.EstadoHabitacion)
             .Include(h => h.TipoHabitacion)
-            .Where(h => h.Id == id)
+            .Where(h => h.Id == id && h.Activo == true)
             .Select(h => new HabitacionDTO
             {
                 Id = h.Id,
@@ -74,6 +75,92 @@ namespace HotelApi.Controllers
 
             return habitacion;
         }
+
+        [HttpPost("disponibles")]
+        public async Task<ActionResult<IEnumerable<Habitacion>>> GetHabitacionesDisponibles([FromBody] DisponibilidadRequest request)
+        {
+            Console.WriteLine("--------------------------------------------------");
+            Console.WriteLine("Recibiendo solicitud de disponibilidad:");
+            Console.WriteLine($"  CheckIn: {request.CheckIn}");
+            Console.WriteLine($"  CheckOut: {request.CheckOut}");
+            Console.WriteLine("  Habitaciones Solicitadas:");
+            if (request.HabitacionesSolicitadas != null && request.HabitacionesSolicitadas.Any())
+            {
+                foreach (var roomReq in request.HabitacionesSolicitadas)
+                {
+                    Console.WriteLine($"    Adultos: {roomReq.Adultos}, Niños: {roomReq.Ninos}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("    Ninguna especificada.");
+            }
+            Console.WriteLine("--------------------------------------------------");
+
+            var estadoActivos = new[] { 1, 2 };
+
+            var habitacionesOcupadas = await _context.DetalleReserva
+                .Include(dr => dr.Reserva)
+                .Where(dr =>
+                    estadoActivos.Contains(dr.Reserva.EstadoId) &&
+                    dr.Reserva.FechaIngreso < request.CheckOut &&
+                    dr.Reserva.FechaSalida > request.CheckIn &&
+                    dr.Activo)
+                .Select(dr => dr.HabitacionId)
+                .Distinct()
+                .ToListAsync();
+
+            var habitacionesDisponibles = await _context.Habitacion
+                .Include(h => h.TipoHabitacion)
+                .Where(h =>
+                    !habitacionesOcupadas.Contains(h.Id) &&
+                    h.Activo)
+                .ToListAsync();
+
+            // Validación de capacidad: Modificado para devolver *todas* las habitaciones que cumplen los criterios
+            var habitacionesFiltradas = new List<Habitacion>();
+            Console.WriteLine("Filtrando habitaciones por capacidad:");
+            foreach (var roomReq in request.HabitacionesSolicitadas)
+            {
+                var capacidadRequerida = roomReq.Adultos + roomReq.Ninos;
+                Console.WriteLine($"  Buscando habitaciones para {roomReq.Adultos} adultos y {roomReq.Ninos} niños (capacidad requerida: {capacidadRequerida})");
+                // En lugar de FirstOrDefault, usamos Where para encontrar *todas* las habitaciones que cumplen
+                var habitacionesCumplen = habitacionesDisponibles.Where(h =>
+                    h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida).ToList(); // ToList() para ejecutar la consulta y obtener resultados
+
+                if (habitacionesCumplen.Any()) // Verificamos si se encontraron habitaciones que cumplen
+                {
+                    habitacionesFiltradas.AddRange(habitacionesCumplen); // Agregamos *todas* las habitaciones encontradas
+                                                                         // No eliminamos de habitacionesDisponibles, ya que podríamos necesitarlas para otras solicitudes en el mismo request
+                    foreach (var hab in habitacionesCumplen)
+                    {
+                        Console.WriteLine($"    Encontrada habitación: ID: {hab.Id}, Nombre: {hab.NumeroHabitacion}, Tipo: {hab.TipoHabitacion?.Nombre}, Capacidad Máxima: {hab.TipoHabitacion?.MaximaOcupacion}");
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("    No se encontraron habitaciones disponibles con la capacidad requerida.");
+                }
+            }
+
+            Console.WriteLine("--------------------------------------------------");
+            Console.WriteLine("Enviando habitaciones disponibles (filtradas por capacidad):");
+            if (habitacionesFiltradas.Any())
+            {
+                foreach (var habitacion in habitacionesFiltradas)
+                {
+                    Console.WriteLine($"  ID: {habitacion.Id}, Nombre: {habitacion.NumeroHabitacion}, Tipo: {habitacion.TipoHabitacion?.Nombre}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("  No se encontraron habitaciones disponibles que cumplan con los criterios de capacidad.");
+            }
+            Console.WriteLine("--------------------------------------------------");
+            return habitacionesFiltradas;
+        }
+
 
         // PUT: api/Habitacions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

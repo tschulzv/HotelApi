@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 namespace HotelApi.Models
 {
     public class TipoHabitacion
@@ -46,6 +47,7 @@ namespace HotelApi.Models
         public bool Activo { get; set; } = true;
 
         // Propiedad de navegación inversa (colección)
+        [JsonIgnore]
         public ICollection<Habitacion> Habitaciones { get; set; }
         public ICollection<ImagenHabitacion> ImagenesHabitaciones { get; set; }
         public ICollection<Servicio> Servicios { get; set; }

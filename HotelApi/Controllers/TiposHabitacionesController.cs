@@ -2,9 +2,15 @@
 using HotelApi.DTOs;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting; // Necesario para IWebHostEnvironment
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -12,10 +18,12 @@ using NuGet.Packaging;
 public class TiposHabitacionesController : ControllerBase
 {
     private readonly HotelApiContext _context;
+    private readonly IWebHostEnvironment _environment; // Para acceder al sistema de archivos
 
-    public TiposHabitacionesController(HotelApiContext context)
+    public TiposHabitacionesController(HotelApiContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
 
     // GET: api/TiposHabitaciones
@@ -81,36 +89,67 @@ public class TiposHabitacionesController : ControllerBase
         return NoContent();
     }
 
-    // POST: api/TiposHabitaciones
-    [HttpPost]
-    public async Task<ActionResult<TipoHabitacionDTO>> PostTipoHabitacion(TipoHabitacionDTO dto)
+    // POST: api/TiposHabitaciones/ConImagenes
+    [HttpPost("ConImagenes")]
+    public async Task<ActionResult<TipoHabitacionDTO>> PostTipoHabitacionConImagenes([FromForm] TipoHabitacionConImagenesDTO tipoHabitacionDTO)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var servicioIds = dto.Servicios.Select(s => s.Id).ToList();
-        var servicios = await _context.Servicio
-            .Where(s => servicioIds.Contains(s.Id))
-            .ToListAsync();
-
-
-        var tipo = new TipoHabitacion
         {
-            Nombre = dto.Nombre,
-            Descripcion = dto.Descripcion,
-            PrecioBase = dto.PrecioBase,
-            CantidadDisponible = dto.CantidadDisponible,
-            MaximaOcupacion = dto.MaximaOcupacion,
-            Tamanho = dto.Tamanho,
+            return BadRequest(ModelState);
+        }
+
+        var servicios = await _context.Servicio
+        .Where(s => tipoHabitacionDTO.Servicios.Contains(s.Id))
+        .ToListAsync();
+
+
+        var tipoHabitacion = new TipoHabitacion
+        {
+            Nombre = tipoHabitacionDTO.Nombre,
+            Descripcion = tipoHabitacionDTO.Descripcion,
+            PrecioBase = tipoHabitacionDTO.PrecioBase,
+            CantidadDisponible = tipoHabitacionDTO.CantidadDisponible,
+            MaximaOcupacion = tipoHabitacionDTO.MaximaOcupacion,
+            Tamanho = tipoHabitacionDTO.Tamanho,
             Servicios = servicios,
             Activo = true,
             Creacion = DateTime.Now
         };
 
-        _context.TipoHabitacion.Add(tipo);
-        await _context.SaveChangesAsync();
+        _context.TipoHabitacion.Add(tipoHabitacion);
+        await _context.SaveChangesAsync(); // Guardar para obtener el Id
 
-        return CreatedAtAction(nameof(GetTipoHabitacion), new { id = tipo.Id }, ToDTO(tipo));
+        if (tipoHabitacionDTO.Imagenes != null && tipoHabitacionDTO.Imagenes.Any())
+        {
+            foreach (var imagen in tipoHabitacionDTO.Imagenes)
+            {
+                if (imagen.Length > 0)
+                {
+                    // Guardar la imagen en el sistema de archivos (ejemplo)
+                    var nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(imagen.FileName);
+                    var rutaGuardado = Path.Combine(_environment.WebRootPath, "imagenes", nombreArchivo);
+
+                    using (var stream = new FileStream(rutaGuardado, FileMode.Create))
+                    {
+                        await imagen.CopyToAsync(stream);
+                    }
+
+                    // Guardar la referencia de la imagen en la base de datos
+                    var imagenHabitacion = new ImagenHabitacion
+                    {
+                        TipoHabitacionId = tipoHabitacion.Id,
+                        Imagen = await System.IO.File.ReadAllBytesAsync(rutaGuardado), // Guardar como byte array
+                        Creacion = DateTime.Now,
+                        Actualizacion = DateTime.Now,
+                        Activo = true
+                    };
+                    _context.ImagenHabitacion.Add(imagenHabitacion);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        return CreatedAtAction(nameof(GetTipoHabitacion), new { id = tipoHabitacion.Id }, ToDTO(tipoHabitacion));
     }
 
     // DELETE: api/TiposHabitaciones/5
@@ -147,4 +186,16 @@ public class TiposHabitacionesController : ControllerBase
             IconName = s.IconName
         }).ToList() ?? new List<ServicioDTO>()
     };
+}
+
+public class TipoHabitacionConImagenesDTO
+{
+    public string Nombre { get; set; }
+    public string Descripcion { get; set; }
+    public decimal PrecioBase { get; set; }
+    public int CantidadDisponible { get; set; }
+    public int MaximaOcupacion { get; set; }
+    public int Tamanho { get; set; }
+    public List<int> Servicios { get; set; }
+    public List<IFormFile>? Imagenes { get; set; }
 }

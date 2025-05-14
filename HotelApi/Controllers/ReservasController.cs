@@ -228,7 +228,9 @@ namespace HotelApi.Controllers
                     CantidadAdultos = d.CantidadAdultos,
                     CantidadNinhos = d.CantidadNinhos,
                     PensionId = d.PensionId,
-                    Activo = d.Activo
+                    Activo = d.Activo,
+                    Creacion = DateTime.Now,
+                    Actualizacion = DateTime.Now
                 }).ToList();
             }
 
