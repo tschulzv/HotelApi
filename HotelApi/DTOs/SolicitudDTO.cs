@@ -13,6 +13,8 @@ namespace HotelApi.DTOs
 
         public int? ConsultaId { get; set; }
 
+        public string? Tipo { get; set; }
+
         [Required]
         public bool EsLeida { get; set; }
 

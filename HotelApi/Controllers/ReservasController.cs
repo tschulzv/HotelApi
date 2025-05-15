@@ -9,6 +9,8 @@ using HotelApi.Data;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using HotelApi.DTOs;
+using System.Net.Mail;
+using System.Net;
 
 namespace HotelApi.Controllers
 {
@@ -179,13 +181,15 @@ namespace HotelApi.Controllers
         // POST: api/Reservas
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ReservaDTO>> PostReserva([FromBody]ReservaDTO resDto)
+        public async Task<ActionResult<ReservaDTO>> PostReserva(ReservaDTO resDto)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Devuelve los errores de validación al cliente
+                var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Mensaje = "Modelo inválido", Errores = errores });
             }
-            var codigo = await GenerarCodigoUnicoAsync(); // generar el codigo de reserva
+
+            var codigo = await GenerarCodigoUnicoAsync();
             var res = new Reserva
             {
                 ClienteId = resDto.ClienteId,
@@ -204,7 +208,6 @@ namespace HotelApi.Controllers
             {
                 res.Detalles = resDto.Detalles.Select(d => new DetalleReserva
                 {
-                    ReservaId = res.Id,
                     HabitacionId = d.HabitacionId,
                     CantidadAdultos = d.CantidadAdultos,
                     CantidadNinhos = d.CantidadNinhos,
@@ -216,8 +219,98 @@ namespace HotelApi.Controllers
             _context.Reserva.Add(res);
             await _context.SaveChangesAsync();
 
+            // Obtener el correo del cliente
+            var cliente = await _context.Cliente.FindAsync(resDto.ClienteId);
+            
+            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
+            {
+                var nombreCliente = cliente.Nombre + ' ' + cliente.Apellido;
+                try
+                {
+                    EnviarEmailConfirmacion(resDto, nombreCliente, cliente.Email, res.Codigo);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al enviar el email: {ex.Message}");
+                }
+            }
+
             return CreatedAtAction("GetReserva", new { id = res.Id }, resDto);
         }
+
+        // confirmar una reserva
+        // PUT: api/Reservas/5/confirm
+
+        [HttpPut("{id}/confirm")]
+        public async Task<IActionResult> ConfirmarReserva(int id, ReservaDTO resDTO)
+        {
+        
+            var res = await _context.Reserva
+                .Include(r => r.Detalles)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (res == null)
+                return NotFound();
+
+            // Actualizar estado a confirmada (id 2)
+            res.EstadoId = 2;
+            res.Actualizacion = DateTime.Now;
+
+            var detallesDTO = resDTO.Detalles ?? new List<DetalleReservaDTO>();
+            var idsDTO = detallesDTO.Select(d => d.Id).ToHashSet();
+
+            // Desactivar detalles que no vienen en el DTO (soft delete)
+            foreach (var detalle in res.Detalles)
+            {
+                if (!idsDTO.Contains(detalle.Id))
+                {
+                    detalle.Activo = false;
+                }
+            }
+
+            // Agregar o actualizar detalles del DTO
+            foreach (var dto in detallesDTO)
+            {
+                var existente = res.Detalles.FirstOrDefault(d => d.Id == dto.Id);
+                if (existente != null)
+                {
+                    // Actualizar
+                    existente.HabitacionId = dto.HabitacionId;
+                    existente.CantidadAdultos = dto.CantidadAdultos;
+                    existente.CantidadNinhos = dto.CantidadNinhos;
+                    existente.PensionId = dto.PensionId;
+                    existente.Activo = true; // Revivir si estaba inactivo
+                }
+                else
+                {
+                    // Nuevo detalle
+                    res.Detalles.Add(new DetalleReserva
+                    {
+                        HabitacionId = dto.HabitacionId,
+                        CantidadAdultos = dto.CantidadAdultos,
+                        CantidadNinhos = dto.CantidadNinhos,
+                        PensionId = dto.PensionId,
+                        Activo = true
+                    });
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ReservaExists(id))
+                    return NotFound();
+                else
+                    throw;
+            }
+
+            return NoContent();
+        }
+
+
 
         // DELETE: api/Reservas/5
         [HttpDelete("{id}")]
@@ -306,5 +399,112 @@ namespace HotelApi.Controllers
                 }).ToList()
             };
         }
+
+        private static string GetPensionString(int pensionId)
+        {
+            return pensionId switch
+            {
+                1 => "Sin Pensión",
+                2 => "Desayuno",
+                3 => "Media Pensión",
+                4 => "Pensión Completa",
+                _ => "Desconocida"
+            };
+        }
+
+        private static string GenerarCuerpoCorreo(ReservaDTO reserva, string nombreCliente, string codigo)
+        {
+            var detallesHtml = string.Join("", reserva.Detalles.Select(d =>
+                        $@"
+                <tr>
+                    <td style='padding: 8px; border: 1px solid #ccc;'>{d.CantidadAdultos}</td>
+                    <td style='padding: 8px; border: 1px solid #ccc;'>{d.CantidadNinhos}</td>
+                    <td style='padding: 8px; border: 1px solid #ccc;'>{GetPensionString(d.PensionId)}</td>
+                </tr>"
+                    ));
+
+                    return $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <h2 style='color: #2c3e50;'>Confirmación de Reserva</h2>
+                <p>Estimado/a <strong>{nombreCliente}</strong>,</p>
+                <p>Gracias por reservar con <strong>Hotel Los Álamos</strong>. A continuación se detallan los datos de su reserva:</p>
+
+                <ul>
+                    <li><strong>Código de reserva:</strong> {codigo}</li>
+                    <li><strong>Fecha de ingreso:</strong> {reserva.FechaIngreso:dd/MM/yyyy}</li>
+                    <li><strong>Fecha de salida:</strong> {reserva.FechaSalida:dd/MM/yyyy}</li>
+                    <li><strong>Llegada estimada:</strong> {reserva.LlegadaEstimada}</li>
+                    <li><strong>Comentarios:</strong> {reserva.Comentarios}</li>
+                </ul>
+
+                <h3>Detalles de la(s) habitación(es):</h3>
+                <table style='border-collapse: collapse; width: 100%;'>
+                    <thead>
+                        <tr style='background-color: #f2f2f2;'>
+                            <th style='padding: 8px; border: 1px solid #ccc;'>Adultos</th>
+                            <th style='padding: 8px; border: 1px solid #ccc;'>Niños</th>
+                            <th style='padding: 8px; border: 1px solid #ccc;'>Pensión</th>
+                        </tr>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {detallesHtml}
+                    </tbody>
+                </table>
+                <p>Si desea cancelar su reserva, puede acceder a ella usando <a href=""https://tusitio.com/reservas/cancelar/{reserva.Codigo}"">este enlace</a>.</p>
+                <p style='margin-top: 20px;'>Nos encantará recibirle pronto. Si tiene alguna duda o desea modificar su reserva, no dude en contactarnos.</p>
+
+                <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>
+            </body>
+            </html>";
+        }
+
+
+        private static void EnviarEmailConfirmacion(ReservaDTO res, string nombreCliente, string emailDestino, string codigoReserva)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("hotellosalamospy@gmail.com", "Hotel Los Alamos");
+
+                //var toAddress = new MailAddress(emailDestino);
+                var toAddress = new MailAddress(emailDestino);
+                const string fromPassword = "qnacddvmoiwxpfkl";
+
+                string subject = "Confirmación de Reserva";
+            
+                string body = GenerarCuerpoCorreo(res, nombreCliente, codigoReserva);
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando email: " + ex.Message);
+                // Aquí puedes agregar logging o manejar la excepción como prefieras
+            }
+        }
     }
 }
+
+    
+
+
+// qnac ddvm oiwx pfkl

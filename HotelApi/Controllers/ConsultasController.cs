@@ -53,7 +53,6 @@ namespace HotelApi.Controllers
         {
             var consulta = new Consulta
             {
-                Id = consultaDTO.Id, // Considera si el ID debe ser generado por la base de datos
                 Nombre = consultaDTO.Nombre,
                 Email = consultaDTO.Email,
                 Telefono = consultaDTO.Telefono,

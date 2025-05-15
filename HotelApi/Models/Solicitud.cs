@@ -18,6 +18,8 @@ namespace HotelApi.Models
         public int? ConsultaId { get; set; }
         public Consulta? Consulta { get; set; }
 
+        public string? Tipo { get; set; } // "Reserva", "Cancelación", "Consulta" 
+
         [Required]
         public bool EsLeida { get; set; }
 

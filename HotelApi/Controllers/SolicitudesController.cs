@@ -69,6 +69,7 @@ namespace HotelApi.Controllers
             sol.CancelacionId = solDto.CancelacionId;
             sol.ConsultaId = solDto.ConsultaId;
             sol.EsLeida = solDto.EsLeida;
+            sol.Tipo = solDto.Tipo;
             sol.Actualizacion = DateTime.Now;
 
             _context.Entry(sol).State = EntityState.Modified;
@@ -108,6 +109,7 @@ namespace HotelApi.Controllers
                 CancelacionId = solDTO.CancelacionId,
                 ConsultaId = solDTO.ConsultaId,
                 EsLeida = solDTO.EsLeida,
+                Tipo = solDTO.Tipo,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
                 Activo = true
@@ -165,6 +167,7 @@ namespace HotelApi.Controllers
                 CancelacionId = sol.CancelacionId,
                 ConsultaId = sol.ConsultaId,
                 EsLeida = sol.EsLeida,
+                Tipo = sol.Tipo,
                 Creacion = sol.Creacion
             };
         }
