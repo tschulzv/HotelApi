@@ -14,7 +14,6 @@ namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class ReservasController : ControllerBase
     {
         private readonly HotelApiContext _context;
@@ -186,10 +185,11 @@ namespace HotelApi.Controllers
             {
                 return BadRequest(ModelState); // Devuelve los errores de validación al cliente
             }
+            var codigo = await GenerarCodigoUnicoAsync(); // generar el codigo de reserva
             var res = new Reserva
             {
                 ClienteId = resDto.ClienteId,
-                Codigo = resDto.Codigo,
+                Codigo = codigo,
                 FechaIngreso = resDto.FechaIngreso,
                 FechaSalida = resDto.FechaSalida,
                 LlegadaEstimada = resDto.LlegadaEstimada,
@@ -256,6 +256,28 @@ namespace HotelApi.Controllers
         private bool ReservaExists(int id)
         {
             return _context.Reserva.Any(e => e.Id == id);
+        }
+
+        private async Task<string> GenerarCodigoUnicoAsync()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+
+            string codigo;
+            bool existe;
+
+            do
+            {
+                // generar el codigo unico
+                codigo = "RES-" + new string(Enumerable.Repeat(chars, 6)
+                    .Select(s => s[random.Next(s.Length)]).ToArray());
+
+                // verificar si el codigo ya existia
+                existe = await _context.Reserva.AnyAsync(r => r.Codigo == codigo);
+            }
+            while (existe);
+
+            return codigo;
         }
 
         private static ReservaDTO ToDTO(Reserva re)

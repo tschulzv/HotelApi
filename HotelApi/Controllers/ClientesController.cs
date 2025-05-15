@@ -47,6 +47,19 @@ namespace HotelApi.Controllers
             return ToDTO(cliente);
         }
 
+        [HttpGet("document/{tipoDocumentoId}/{numDocumento}")]
+        public async Task<ActionResult<ClienteDTO>> GetClienteDocumento(int tipoDocumentoId, string numDocumento)
+        {
+            var cliente = await _context.Cliente.Where(c => c.TipoDocumentoId == tipoDocumentoId && c.NumDocumento == numDocumento).Include(c => c.TipoDocumento).FirstOrDefaultAsync();
+
+            if (cliente == null)
+            {
+                return NotFound();
+            }
+
+            return ToDTO(cliente);
+        }
+
         // PUT: api/Clientes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

@@ -14,7 +14,6 @@ namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class HabitacionsController : ControllerBase
     {
         private readonly HotelApiContext _context;

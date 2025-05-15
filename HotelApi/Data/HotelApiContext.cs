@@ -32,5 +32,25 @@ namespace HotelApi.Data
         public DbSet<HotelApi.Models.TipoDocumento> TipoDocumento { get; set; } = default!;
         public DbSet<HotelApi.Models.TipoHabitacion> TipoHabitacion { get; set; } = default!;
         public DbSet<HotelApi.Models.Usuario> Usuario{ get; set; } = default!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // restriccion codigos de reserva unicos
+            modelBuilder.Entity<Reserva>()
+                .HasIndex(r => r.Codigo)
+                .IsUnique();
+
+            // nombres de usuario unicos
+            modelBuilder.Entity<Usuario>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            // documento unico
+            modelBuilder.Entity<Cliente>()
+            .HasIndex(p => new { p.TipoDocumentoId, p.NumDocumento })
+            .IsUnique();
+
+        }
+
     }
 }
