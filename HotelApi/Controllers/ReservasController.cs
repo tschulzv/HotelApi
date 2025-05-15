@@ -373,7 +373,7 @@ namespace HotelApi.Controllers
             return codigo;
         }
 
-        private static ReservaDTO ToDTO(Reserva re)
+        public static ReservaDTO ToDTO(Reserva re)
         {
             return new ReservaDTO
             {

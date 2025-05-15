@@ -148,7 +148,7 @@ namespace HotelApi.Controllers
         {
             return _context.Consulta.Any(e => e.Id == id);
         }
-        private static ConsultaDTO ToDTO(Consulta consulta)
+        public static ConsultaDTO ToDTO(Consulta consulta)
         {
             return new ConsultaDTO
             {

@@ -9,11 +9,16 @@ namespace HotelApi.DTOs
 
         public int? ReservaId { get; set; }
 
+        public ReservaDTO? Reserva{ get; set; }
+
         public int? CancelacionId { get; set; }
+
+        public CancelacionDTO? Cancelacion { get; set; }
 
         public int? ConsultaId { get; set; }
 
-        public string? Tipo { get; set; }
+        public ConsultaDTO? Consulta{ get; set; }
+        public string? Tipo { get; set; } 
 
         [Required]
         public bool EsLeida { get; set; }

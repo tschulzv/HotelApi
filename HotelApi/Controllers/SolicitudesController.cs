@@ -29,7 +29,8 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolicitudDTO>>> GetSolicitud()
         {
-            var sol = await _context.Solicitud.Where(s => s.Activo).ToListAsync();
+            var sol = await _context.Solicitud.Where(s => s.Activo).Include(s => s.Reserva).ThenInclude(r => r.Cliente)
+                .Include(s => s.Cancelacion).Include(s => s.Consulta).ToListAsync();
             var solDto = sol.Select(s => ToDTO(s));
             return Ok(solDto);
         }
@@ -38,7 +39,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SolicitudDTO>> GetSolicitud(int id)
         {
-            var solicitud = await _context.Solicitud.Where(s => s.Activo && s.Id == id).FirstOrDefaultAsync();
+            var solicitud = await _context.Solicitud.Where(s => s.Activo && s.Id == id).Include(s => s.Reserva).Include(s => s.Cancelacion).Include(s => s.Consulta).FirstOrDefaultAsync();
 
             if (solicitud == null)
             {
@@ -103,6 +104,7 @@ namespace HotelApi.Controllers
             {
                 return BadRequest(ModelState); // Devuelve los errores de validación al cliente
             }
+
             var solicitud = new Solicitud
             {
                 ReservaId = solDTO.ReservaId,
@@ -164,12 +166,17 @@ namespace HotelApi.Controllers
             {
                 Id = sol.Id,
                 ReservaId = sol.ReservaId,
+                Reserva = sol.ReservaId != null ? ReservasController.ToDTO(sol.Reserva) : null,
                 CancelacionId = sol.CancelacionId,
+                Cancelacion = sol.CancelacionId != null ? CancelacionsController.ToDTO(sol.Cancelacion) : null,
                 ConsultaId = sol.ConsultaId,
+                Consulta = sol.ConsultaId != null ? ConsultasController.ToDTO(sol.Consulta) : null,
                 EsLeida = sol.EsLeida,
                 Tipo = sol.Tipo,
                 Creacion = sol.Creacion
             };
         }
+
+
     }
 }
