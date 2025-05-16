@@ -34,6 +34,7 @@ namespace HotelApi.Controllers
             .Where(r => r.Activo)
             .Include(r => r.Detalles)
                 .ThenInclude(d => d.Habitacion)
+                .ThenInclude(h => h.TipoHabitacion)
             .Include(r => r.Cliente)
             .ToListAsync();
 
@@ -48,6 +49,8 @@ namespace HotelApi.Controllers
             var reserva = await _context.Reserva
             .Include(r => r.Detalles)
                 .ThenInclude (d => d.Habitacion)
+             .Include(r => r.Detalles)
+                .ThenInclude(d => d.TipoHabitacion)
             .Include(r => r.Cliente)
             .Where(r => r.Activo && r.Id == id)
             .FirstOrDefaultAsync();
@@ -69,6 +72,9 @@ namespace HotelApi.Controllers
             .Where(r => r.ClienteId == clienteId && r.Activo)
             .OrderByDescending(r => r.FechaIngreso)
             .Include(r => r.Detalles)
+                .ThenInclude(d => d.Habitacion)
+             .Include(r => r.Detalles)
+                .ThenInclude(d => d.TipoHabitacion)
             .ToListAsync();
 
             if (res == null)
@@ -143,6 +149,7 @@ namespace HotelApi.Controllers
                 {
                     // Actualizar
                     existente.HabitacionId = dto.HabitacionId;
+                    existente.TipoHabitacionId = dto.TipoHabitacionId;
                     existente.CantidadAdultos = dto.CantidadAdultos;
                     existente.CantidadNinhos = dto.CantidadNinhos;
                     existente.PensionId = dto.PensionId;
@@ -154,6 +161,7 @@ namespace HotelApi.Controllers
                     res.Detalles.Add(new DetalleReserva
                     {
                         HabitacionId = dto.HabitacionId,
+                        TipoHabitacionId = dto.TipoHabitacionId,
                         CantidadAdultos = dto.CantidadAdultos,
                         CantidadNinhos = dto.CantidadNinhos,
                         PensionId = dto.PensionId,
@@ -209,6 +217,7 @@ namespace HotelApi.Controllers
                 res.Detalles = resDto.Detalles.Select(d => new DetalleReserva
                 {
                     HabitacionId = d.HabitacionId,
+                    TipoHabitacionId = d.TipoHabitacionId,
                     CantidadAdultos = d.CantidadAdultos,
                     CantidadNinhos = d.CantidadNinhos,
                     PensionId = d.PensionId,
@@ -287,6 +296,7 @@ namespace HotelApi.Controllers
                     res.Detalles.Add(new DetalleReserva
                     {
                         HabitacionId = dto.HabitacionId,
+                        TipoHabitacionId = dto.TipoHabitacionId,
                         CantidadAdultos = dto.CantidadAdultos,
                         CantidadNinhos = dto.CantidadNinhos,
                         PensionId = dto.PensionId,
@@ -373,6 +383,81 @@ namespace HotelApi.Controllers
             return codigo;
         }
 
+        [HttpGet("disponibles/{reservaId}")]
+        public async Task<ActionResult<IEnumerable<HabitacionDTO>>> BuscarDisponibles(int reservaId)
+        {
+            var reserva = await _context.Reserva
+                .Include(r => r.Detalles)
+                .FirstOrDefaultAsync(r => r.Id == reservaId && r.Activo);
+
+            if (reserva == null)
+                return NotFound("Reserva no encontrada o inactiva.");
+
+            if (reserva.Detalles == null || reserva.Detalles.Count == 0)
+                return BadRequest("La reserva no contiene detalles.");
+
+            var habitacionesDisponibles = new List<Habitacion>();
+
+            foreach (var detalle in reserva.Detalles)
+            {
+                List<Habitacion> disponibles = new();
+
+                if (detalle.TipoHabitacionId != null)
+                {
+                    var capacidadRequerida = detalle.CantidadAdultos + detalle.CantidadNinhos;
+
+                    var habitaciones = await _context.Habitacion
+                        .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId && h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
+                        .ToListAsync();
+
+                    var habitacionesOcupadas = await _context.DetalleReserva
+                        .Where(d => d.Activo &&
+                                    d.HabitacionId != null &&
+                                    d.Reserva.Activo &&
+                                    (
+                                        (reserva.FechaIngreso >= d.Reserva.FechaIngreso && reserva.FechaIngreso < d.Reserva.FechaSalida) ||
+                                        (reserva.FechaSalida > d.Reserva.FechaIngreso && reserva.FechaSalida <= d.Reserva.FechaSalida) ||
+                                        (reserva.FechaIngreso <= d.Reserva.FechaIngreso && reserva.FechaSalida >= d.Reserva.FechaSalida)
+                                    ))
+                        .Select(d => d.HabitacionId.Value)
+                        .ToListAsync();
+
+                    disponibles = habitaciones
+                        .Where(h => !habitacionesOcupadas.Contains(h.Id))
+                        .ToList();
+                }
+                else if (detalle.HabitacionId != null)
+                {
+                    var habitacion = await _context.Habitacion
+                        .FirstOrDefaultAsync(h => h.Id == detalle.HabitacionId);
+
+                    if (habitacion != null)
+                        disponibles.Add(habitacion);
+                }
+
+                habitacionesDisponibles.AddRange(disponibles);
+            }
+
+            if (!habitacionesDisponibles.Any())
+            {
+                return NotFound("No se encontraron habitaciones disponibles para esta reserva");
+            }
+
+            // Quitar duplicados si hay habitaciones repetidas en varios detalles
+            var habitacionesUnicas = habitacionesDisponibles
+                .GroupBy(h => h.Id)
+                .Select(g => g.First())
+                .ToList();
+
+            // Usar ToDTO desde HabitacionesController
+            var habitacionesDTO = habitacionesUnicas
+                .Select(h => HabitacionsController.ToDTO(h))
+                .ToList();
+
+                return Ok(habitacionesDTO);
+        }
+
+
         public static ReservaDTO ToDTO(Reserva re)
         {
             return new ReservaDTO
@@ -391,6 +476,8 @@ namespace HotelApi.Controllers
                     Id = d.Id,
                     ReservaId = d.ReservaId,
                     HabitacionId = d.HabitacionId,
+                    TipoHabitacionId = d.TipoHabitacionId,
+                    TipoHabitacion = d.TipoHabitacion?.Nombre,
                     NumeroHabitacion = d.Habitacion?.NumeroHabitacion,
                     CantidadAdultos = d.CantidadAdultos,
                     CantidadNinhos = d.CantidadNinhos,

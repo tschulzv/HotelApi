@@ -179,7 +179,7 @@ namespace HotelApi.Controllers
             return _context.Habitacion.Any(e => e.Id == id);
         }
 
-        private static HabitacionDTO ToDTO(Habitacion habitacion)
+        public static HabitacionDTO ToDTO(Habitacion habitacion)
         {
             return new HabitacionDTO
             {
