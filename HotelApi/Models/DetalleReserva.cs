@@ -14,6 +14,9 @@ namespace HotelApi.Models
         public int ReservaId { get; set; }
         public Reserva Reserva { get; set; }
 
+        public int? TipoHabitacionId { get; set; }
+        public TipoHabitacion? TipoHabitacion { get; set; }
+
         public int? HabitacionId { get; set; } 
         public Habitacion Habitacion { get; set; }
 

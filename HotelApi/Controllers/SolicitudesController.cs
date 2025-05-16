@@ -29,8 +29,14 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolicitudDTO>>> GetSolicitud()
         {
-            var sol = await _context.Solicitud.Where(s => s.Activo).Include(s => s.Reserva).ThenInclude(r => r.Cliente)
-                .Include(s => s.Cancelacion).Include(s => s.Consulta).ToListAsync();
+            var sol = await _context.Solicitud.Where(s => s.Activo)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Cliente)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Detalles)
+                .Include(s => s.Cancelacion)
+                .Include(s => s.Consulta)
+                .ToListAsync();
             var solDto = sol.Select(s => ToDTO(s));
             return Ok(solDto);
         }
@@ -39,7 +45,15 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SolicitudDTO>> GetSolicitud(int id)
         {
-            var solicitud = await _context.Solicitud.Where(s => s.Activo && s.Id == id).Include(s => s.Reserva).Include(s => s.Cancelacion).Include(s => s.Consulta).FirstOrDefaultAsync();
+            var solicitud = await _context.Solicitud
+                .Where(s => s.Activo && s.Id == id)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Cliente)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Detalles) 
+                .Include(s => s.Cancelacion)
+                .Include(s => s.Consulta)
+                .FirstOrDefaultAsync();
 
             if (solicitud == null)
             {
@@ -93,6 +107,42 @@ namespace HotelApi.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("{id}/read")]
+        public async Task<IActionResult> PutLeidaSolicitud(int id)
+        {
+
+            var sol = await _context.Solicitud.FindAsync(id);
+
+            if (sol == null)
+            {
+                return NotFound();
+            }
+
+            sol.EsLeida = true;
+            sol.Actualizacion = DateTime.Now;
+
+            _context.Entry(sol).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SolicitudExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
 
         // POST: api/Solicitudes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

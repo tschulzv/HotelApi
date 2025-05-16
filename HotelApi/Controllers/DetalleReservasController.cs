@@ -28,7 +28,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DetalleReservaDTO>>> GetDetalleReserva()
         {
-            var detalleReservas = await _context.DetalleReserva.Where(d => d.Activo).Include(d => d.Habitacion).ToListAsync();
+            var detalleReservas = await _context.DetalleReserva.Where(d => d.Activo).Include(d => d.Habitacion).ThenInclude(h=> h.TipoHabitacion).ToListAsync();
             return detalleReservas.Select(ToDTO).ToList();
         }
 
@@ -36,7 +36,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<DetalleReservaDTO>> GetDetalleReserva(int id)
         {
-            var detalleReserva = await _context.DetalleReserva.Where(d => d.Activo && d.Id == id).Include(d => d.Habitacion).FirstOrDefaultAsync();
+            var detalleReserva = await _context.DetalleReserva.Where(d => d.Activo && d.Id == id).Include(d => d.Habitacion).ThenInclude(h => h.TipoHabitacion).FirstOrDefaultAsync();
 
             if (detalleReserva == null)
             {
@@ -64,6 +64,7 @@ namespace HotelApi.Controllers
 
             detalleReserva.ReservaId = detalleReservaDTO.ReservaId;
             detalleReserva.HabitacionId = detalleReservaDTO.HabitacionId;
+            detalleReserva.TipoHabitacionId = detalleReservaDTO.TipoHabitacionId;
             detalleReserva.CantidadAdultos = detalleReservaDTO.CantidadAdultos;
             detalleReserva.CantidadNinhos = detalleReservaDTO.CantidadNinhos;
             detalleReserva.PensionId = detalleReservaDTO.PensionId;
@@ -100,6 +101,7 @@ namespace HotelApi.Controllers
             {
                 ReservaId = detalleReservaDTO.ReservaId,
                 HabitacionId = detalleReservaDTO.HabitacionId,
+                TipoHabitacionId = detalleReservaDTO.TipoHabitacionId,
                 CantidadAdultos = detalleReservaDTO.CantidadAdultos,
                 CantidadNinhos = detalleReservaDTO.CantidadNinhos,
                 PensionId = detalleReservaDTO.PensionId,
@@ -160,6 +162,8 @@ namespace HotelApi.Controllers
                 Id = detalleReserva.Id,
                 ReservaId = detalleReserva.ReservaId,
                 HabitacionId = detalleReserva.HabitacionId,
+                TipoHabitacionId = detalleReserva.TipoHabitacionId,
+                TipoHabitacion = detalleReserva.TipoHabitacion.Nombre,
                 NumeroHabitacion = detalleReserva.Habitacion?.NumeroHabitacion,
                 CantidadAdultos = detalleReserva.CantidadAdultos,
                 CantidadNinhos = detalleReserva.CantidadNinhos,
