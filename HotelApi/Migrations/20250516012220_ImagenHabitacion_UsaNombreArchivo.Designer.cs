@@ -4,6 +4,7 @@ using HotelApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelApi.Migrations
 {
     [DbContext(typeof(HotelApiContext))]
-    partial class HotelApiContextModelSnapshot : ModelSnapshot
+    [Migration("20250516012220_ImagenHabitacion_UsaNombreArchivo")]
+    partial class ImagenHabitacion_UsaNombreArchivo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -413,13 +416,13 @@ namespace HotelApi.Migrations
                     b.Property<DateTime>("Creacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TipoHabitacionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
+                    b.Property<string>("NombreArchivo")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("TipoHabitacionId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

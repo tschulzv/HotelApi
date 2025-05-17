@@ -48,9 +48,26 @@ namespace HotelApi.Controllers
             return ToDTO(imagenHabitacion);
         }
 
-        // PUT: api/ImagenHabitacions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        // GET: ImagenesHabitaciones/tipo/{id}
+        [HttpGet("tipo/{id}")]
+        public async Task<ActionResult<IEnumerable<ImagenHabitacionDTO>>> GetImagenesPorTipo(int id)
+        {
+            var imagenes = await _context.ImagenHabitacion
+                .Where(img => img.TipoHabitacionId == id)
+                .Select(img => new ImagenHabitacionDTO
+                {
+                    Id = img.Id,
+                    Url = img.Url,
+                    TipoHabitacionId = img.TipoHabitacionId
+                })
+                .ToListAsync();
+
+            return Ok(imagenes);
+        }
+
+            // PUT: api/ImagenHabitacions/5
+            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+            [HttpPut("{id}")]
         public async Task<IActionResult> PutImagenHabitacion(int id, ImagenHabitacionDTO imagenHabitacionDTO)
         {
             if (id != imagenHabitacionDTO.Id)
@@ -65,7 +82,7 @@ namespace HotelApi.Controllers
             }
 
             imagenHabitacion.TipoHabitacionId = imagenHabitacionDTO.TipoHabitacionId;
-            imagenHabitacion.Imagen = imagenHabitacionDTO.Imagen;
+            imagenHabitacion.Url = imagenHabitacionDTO.Url;
             imagenHabitacion.Actualizacion = DateTime.Now;
 
             _context.Entry(imagenHabitacion).State = EntityState.Modified;
@@ -101,7 +118,7 @@ namespace HotelApi.Controllers
             var imagenHabitacion = new ImagenHabitacion
             {
                 TipoHabitacionId = imagenHabitacionDTO.TipoHabitacionId,
-                Imagen = imagenHabitacionDTO.Imagen,
+                Url = imagenHabitacionDTO.Url,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
                 Activo = true
@@ -156,7 +173,7 @@ namespace HotelApi.Controllers
             {
                 Id = imagenHabitacion.Id,
                 TipoHabitacionId = imagenHabitacion.TipoHabitacionId,
-                Imagen = imagenHabitacion.Imagen
+                Url = imagenHabitacion.Url
             };
         }
     }

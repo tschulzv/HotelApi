@@ -13,5 +13,6 @@ namespace HotelApi.DTOs
         public int MaximaOcupacion { get; set; }
         public int Tamanho { get; set; }
         public List<ServicioDTO> Servicios { get; set; } = new List<ServicioDTO>();
+        public List<ImagenHabitacionDTO> Imagenes { get; set; } = new List<ImagenHabitacionDTO>();
     }
 }
