@@ -5,7 +5,7 @@
 namespace HotelApi.Migrations
 {
     /// <inheritdoc />
-    public partial class ImagenHabitacion_UsaNombreArchivo : Migration
+    public partial class addurlimagen : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
