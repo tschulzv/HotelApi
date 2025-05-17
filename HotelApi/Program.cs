@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // Reemplaza con la URL de tu frontend
+            policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // Reemplaza con la URL de tu frontend
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -106,10 +106,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles();
 
 app.UseCors("AllowReactApp");
 
 app.UseHttpsRedirection();
+
 app.UseAuthentication();
 
 app.UseAuthorization();

@@ -15,7 +15,8 @@ namespace HotelApi.Models
         public TipoHabitacion TipoHabitacion { get; set; }
 
         [Required]
-        public byte[] Imagen { get; set; }
+        [MaxLength(255)]
+        public string Url { get; set; }
 
         [Required]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
