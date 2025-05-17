@@ -192,6 +192,7 @@ namespace HotelApi.Controllers
             return new CancelacionDTO
             {
                 Id = ca.Id,
+                ReservaId = ca.ReservaId,
                 DetalleReservaId = ca.DetalleReservaId,
                 Motivo = ca.Motivo,
                 Activo = ca.Activo

@@ -163,7 +163,7 @@ namespace HotelApi.Controllers
                 ReservaId = detalleReserva.ReservaId,
                 HabitacionId = detalleReserva.HabitacionId,
                 TipoHabitacionId = detalleReserva.TipoHabitacionId,
-                TipoHabitacion = detalleReserva.TipoHabitacion.Nombre,
+                TipoHabitacion = detalleReserva.TipoHabitacion?.Nombre,
                 NumeroHabitacion = detalleReserva.Habitacion?.NumeroHabitacion,
                 CantidadAdultos = detalleReserva.CantidadAdultos,
                 CantidadNinhos = detalleReserva.CantidadNinhos,

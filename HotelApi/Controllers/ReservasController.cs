@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using HotelApi.DTOs;
 using System.Net.Mail;
 using System.Net;
+using HotelApi.DTOs.Request;
 
 namespace HotelApi.Controllers
 {
@@ -64,9 +65,9 @@ namespace HotelApi.Controllers
         }
 
         //obtener reserva con determinado codigo
-        // GET: api/Reservas/RES001
-        [HttpGet("{codigo}")]
-        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReserva(string codigo)
+        // GET: api/Reservas/code/RES001
+        [HttpGet("/code/{codigo}")]
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigo(string codigo)
         {
             var res = await _context.Reserva
             .Where(r => r.Codigo == codigo && r.EstadoId == 1)
@@ -341,6 +342,26 @@ namespace HotelApi.Controllers
             return NoContent();
         }
 
+        [HttpPost("asignarHabitaciones")]
+        public async Task<IActionResult> AsignarHabitaciones([FromBody] AsignarHabitacionesRequest request)
+        {
+            foreach (var asignacion in request.Asignaciones)
+            {
+                var detalle = await _context.DetalleReserva
+                    .FirstOrDefaultAsync(d => d.Id == asignacion.DetalleReservaId && d.ReservaId == request.ReservaId);
+
+                if (detalle == null)
+                {
+                    return NotFound($"No se encontró el detalle con ID {asignacion.DetalleReservaId} para la reserva {request.ReservaId}");
+                }
+
+                detalle.HabitacionId = asignacion.HabitacionId;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Habitaciones asignadas correctamente." });
+        }
 
 
         // DELETE: api/Reservas/5
@@ -428,8 +449,10 @@ namespace HotelApi.Controllers
                     var capacidadRequerida = detalle.CantidadAdultos + detalle.CantidadNinhos;
 
                     var habitaciones = await _context.Habitacion
-                        .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId && h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
-                        .ToListAsync();
+                    .Include(h => h.TipoHabitacion)
+                    .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId &&
+                                h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
+                    .ToListAsync();
 
                     var habitacionesOcupadas = await _context.DetalleReserva
                         .Where(d => d.Activo &&
@@ -485,7 +508,7 @@ namespace HotelApi.Controllers
             {
                 Id = re.Id,
                 ClienteId = re.ClienteId,
-                NombreCliente = re.Cliente.Nombre + " " + re.Cliente.Apellido,
+                NombreCliente = re.Cliente != null ? re.Cliente?.Nombre + " " + re.Cliente?.Apellido : " ",
                 Codigo = re.Codigo,
                 FechaIngreso = re.FechaIngreso,
                 FechaSalida = re.FechaSalida,
