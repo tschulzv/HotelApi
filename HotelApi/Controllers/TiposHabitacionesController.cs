@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class TiposHabitacionesController : ControllerBase
 {
     private readonly HotelApiContext _context;
