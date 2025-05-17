@@ -9,7 +9,7 @@ namespace HotelApi.DTOs
 
         public int ClienteId { get; set; }
         public string? NombreCliente { get; set; }
-        public string Codigo { get; set; }
+        public string? Codigo { get; set; }
 
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaIngreso { get; set; }

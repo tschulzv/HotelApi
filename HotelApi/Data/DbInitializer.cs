@@ -319,9 +319,10 @@ namespace HotelApi.Data
                 new Solicitud
                 {
                     ReservaId = reservas[0].Id,
-                    CancelacionId = cancelaciones[0].Id,
+                    CancelacionId = null,
                     ConsultaId = null,
                     EsLeida = false,
+                    Tipo = "Reserva",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
@@ -332,6 +333,7 @@ namespace HotelApi.Data
                     CancelacionId = null,
                     ConsultaId = consultas[0].Id,
                     EsLeida = false,
+                    Tipo = "Consulta",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true

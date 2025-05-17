@@ -15,7 +15,6 @@ namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class SolicitudesController : ControllerBase
     {
         private readonly HotelApiContext _context;
@@ -29,7 +28,14 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolicitudDTO>>> GetSolicitud()
         {
-            var sol = await _context.Solicitud.Where(s => s.Activo).ToListAsync();
+            var sol = await _context.Solicitud.Where(s => s.Activo)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Cliente)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Detalles)
+                .Include(s => s.Cancelacion)
+                .Include(s => s.Consulta)
+                .ToListAsync();
             var solDto = sol.Select(s => ToDTO(s));
             return Ok(solDto);
         }
@@ -38,7 +44,15 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SolicitudDTO>> GetSolicitud(int id)
         {
-            var solicitud = await _context.Solicitud.Where(s => s.Activo && s.Id == id).FirstOrDefaultAsync();
+            var solicitud = await _context.Solicitud
+                .Where(s => s.Activo && s.Id == id)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Cliente)
+                .Include(s => s.Reserva)
+                    .ThenInclude(r => r.Detalles) 
+                .Include(s => s.Cancelacion)
+                .Include(s => s.Consulta)
+                .FirstOrDefaultAsync();
 
             if (solicitud == null)
             {
@@ -69,6 +83,7 @@ namespace HotelApi.Controllers
             sol.CancelacionId = solDto.CancelacionId;
             sol.ConsultaId = solDto.ConsultaId;
             sol.EsLeida = solDto.EsLeida;
+            sol.Tipo = solDto.Tipo;
             sol.Actualizacion = DateTime.Now;
 
             _context.Entry(sol).State = EntityState.Modified;
@@ -92,6 +107,42 @@ namespace HotelApi.Controllers
             return NoContent();
         }
 
+        [HttpPut("{id}/read")]
+        public async Task<IActionResult> PutLeidaSolicitud(int id)
+        {
+
+            var sol = await _context.Solicitud.FindAsync(id);
+
+            if (sol == null)
+            {
+                return NotFound();
+            }
+
+            sol.EsLeida = true;
+            sol.Actualizacion = DateTime.Now;
+
+            _context.Entry(sol).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SolicitudExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+
         // POST: api/Solicitudes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -102,12 +153,14 @@ namespace HotelApi.Controllers
             {
                 return BadRequest(ModelState); // Devuelve los errores de validación al cliente
             }
+
             var solicitud = new Solicitud
             {
                 ReservaId = solDTO.ReservaId,
                 CancelacionId = solDTO.CancelacionId,
                 ConsultaId = solDTO.ConsultaId,
                 EsLeida = solDTO.EsLeida,
+                Tipo = solDTO.Tipo,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
                 Activo = true
@@ -162,11 +215,17 @@ namespace HotelApi.Controllers
             {
                 Id = sol.Id,
                 ReservaId = sol.ReservaId,
+                Reserva = sol.ReservaId != null ? ReservasController.ToDTO(sol.Reserva) : null,
                 CancelacionId = sol.CancelacionId,
+                Cancelacion = sol.CancelacionId != null ? CancelacionsController.ToDTO(sol.Cancelacion) : null,
                 ConsultaId = sol.ConsultaId,
+                Consulta = sol.ConsultaId != null ? ConsultasController.ToDTO(sol.Consulta) : null,
                 EsLeida = sol.EsLeida,
+                Tipo = sol.Tipo,
                 Creacion = sol.Creacion
             };
         }
+
+
     }
 }

@@ -22,7 +22,7 @@
 
         public string Nacionalidad { get; set; }
 
-        public string Comentarios { get; set; }
+        public string? Comentarios { get; set; }
 
         public bool Activo { get; set; }
 

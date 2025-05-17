@@ -4,6 +4,7 @@ using HotelApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelApi.Migrations
 {
     [DbContext(typeof(HotelApiContext))]
-    partial class HotelApiContextModelSnapshot : ModelSnapshot
+    [Migration("20250515203621_cancelacion")]
+    partial class cancelacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -298,9 +301,6 @@ namespace HotelApi.Migrations
                     b.Property<int>("ReservaId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TipoHabitacionId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("HabitacionId");
@@ -308,8 +308,6 @@ namespace HotelApi.Migrations
                     b.HasIndex("PensionId");
 
                     b.HasIndex("ReservaId");
-
-                    b.HasIndex("TipoHabitacionId");
 
                     b.ToTable("DetalleReserva");
                 });
@@ -424,13 +422,12 @@ namespace HotelApi.Migrations
                     b.Property<DateTime>("Creacion")
                         .HasColumnType("datetime2");
 
+                    b.Property<byte[]>("Imagen")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
                     b.Property<int>("TipoHabitacionId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
@@ -811,17 +808,11 @@ namespace HotelApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HotelApi.Models.TipoHabitacion", "TipoHabitacion")
-                        .WithMany()
-                        .HasForeignKey("TipoHabitacionId");
-
                     b.Navigation("Habitacion");
 
                     b.Navigation("Pension");
 
                     b.Navigation("Reserva");
-
-                    b.Navigation("TipoHabitacion");
                 });
 
             modelBuilder.Entity("HotelApi.Models.Habitacion", b =>

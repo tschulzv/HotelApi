@@ -6,6 +6,10 @@
 
         public int ReservaId { get; set; }
 
+        public int? TipoHabitacionId { get; set; }
+
+        public string? TipoHabitacion { get; set; }
+
         public int? HabitacionId { get; set; }
 
         public int? NumeroHabitacion { get; set; }

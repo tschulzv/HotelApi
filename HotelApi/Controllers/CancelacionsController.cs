@@ -106,6 +106,7 @@ namespace HotelApi.Controllers
                 var cancelacion = new Cancelacion
                 {
                     DetalleReservaId = caDto.DetalleReservaId,
+                    ReservaId = caDto.ReservaId,
                     Motivo = caDto.Motivo,
                     Creacion = DateTime.Now,
                     Actualizacion = DateTime.Now,
@@ -114,13 +115,26 @@ namespace HotelApi.Controllers
 
                 _context.Cancelacion.Add(cancelacion);
 
-                // Inactivar el detalle de reserva
-                var detalle = await _context.DetalleReserva.FindAsync(caDto.DetalleReservaId);
-                if (detalle == null)
-                    return NotFound($"No se encontró el DetalleReserva con ID {caDto.DetalleReservaId}");
+                // si el detalle no es null, se desea cancelar solo un detalle
+                if (caDto.DetalleReservaId != null)
+                {
+                    // Inactivar el detalle de reserva
+                    var detalle = await _context.DetalleReserva.FindAsync(caDto.DetalleReservaId);
+                    if (detalle == null)
+                        return NotFound($"No se encontró el DetalleReserva con ID {caDto.DetalleReservaId}");
 
-                detalle.Activo = false;
-                detalle.Actualizacion = DateTime.Now;
+                    detalle.Activo = false;
+                    detalle.Actualizacion = DateTime.Now;
+                } else if (caDto.ReservaId != null)
+                {
+                    // cambiar el estado de la reserva a cancelada
+                    var res = await _context.Reserva.FindAsync(caDto.ReservaId);
+                    if (res == null)
+                        return NotFound($"No se encontró Reserva con ID {caDto.ReservaId}");
+
+                    res.EstadoId = 3;
+                    res.Actualizacion = DateTime.Now;
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -173,7 +187,7 @@ namespace HotelApi.Controllers
             return _context.Cancelacion.Any(e => e.Id == id);
         }
 
-        private static CancelacionDTO ToDTO(Cancelacion ca)
+        public static CancelacionDTO ToDTO(Cancelacion ca)
         {
             return new CancelacionDTO
             {

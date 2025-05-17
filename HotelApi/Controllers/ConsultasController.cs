@@ -14,7 +14,6 @@ namespace HotelApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class ConsultasController : ControllerBase
     {
         private readonly HotelApiContext _context;
@@ -53,7 +52,6 @@ namespace HotelApi.Controllers
         {
             var consulta = new Consulta
             {
-                Id = consultaDTO.Id, // Considera si el ID debe ser generado por la base de datos
                 Nombre = consultaDTO.Nombre,
                 Email = consultaDTO.Email,
                 Telefono = consultaDTO.Telefono,
@@ -63,6 +61,39 @@ namespace HotelApi.Controllers
                 Activo = consultaDTO.Activo
             };
             _context.Consulta.Add(consulta);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetConsulta), new { id = consulta.Id }, ToDTO(consulta));
+        }
+
+
+        // POST: api/Consultas/public ; crea la solicitud asociada
+        [HttpPost("public")]
+        public async Task<ActionResult<ConsultaDTO>> PostPublicConsulta(ConsultaDTO consultaDTO)
+        {
+            var consulta = new Consulta
+            {
+                Nombre = consultaDTO.Nombre,
+                Email = consultaDTO.Email,
+                Telefono = consultaDTO.Telefono,
+                Mensaje = consultaDTO.Mensaje,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
+            _context.Consulta.Add(consulta);
+
+            var solicitud = new Solicitud
+            {
+                ConsultaId = consulta.Id,
+                Consulta = consulta,
+                Tipo = "Consulta",
+                EsLeida = false,
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
+            };
+            _context.Solicitud.Add(solicitud);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetConsulta), new { id = consulta.Id }, ToDTO(consulta));
@@ -149,7 +180,7 @@ namespace HotelApi.Controllers
         {
             return _context.Consulta.Any(e => e.Id == id);
         }
-        private static ConsultaDTO ToDTO(Consulta consulta)
+        public static ConsultaDTO ToDTO(Consulta consulta)
         {
             return new ConsultaDTO
             {
