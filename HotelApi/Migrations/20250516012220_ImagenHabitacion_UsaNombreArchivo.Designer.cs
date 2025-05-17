@@ -4,6 +4,7 @@ using HotelApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelApi.Migrations
 {
     [DbContext(typeof(HotelApiContext))]
-    partial class HotelApiContextModelSnapshot : ModelSnapshot
+    [Migration("20250516012220_ImagenHabitacion_UsaNombreArchivo")]
+    partial class ImagenHabitacion_UsaNombreArchivo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,7 +42,7 @@ namespace HotelApi.Migrations
                     b.Property<DateTime>("Creacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("DetalleReservaId")
+                    b.Property<int>("DetalleReservaId")
                         .HasColumnType("int");
 
                     b.Property<string>("Motivo")
@@ -47,14 +50,9 @@ namespace HotelApi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int?>("ReservaId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DetalleReservaId");
-
-                    b.HasIndex("ReservaId");
 
                     b.ToTable("Cancelacion");
                 });
@@ -181,8 +179,7 @@ namespace HotelApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TipoDocumentoId", "NumDocumento")
-                        .IsUnique();
+                    b.HasIndex("TipoDocumentoId");
 
                     b.ToTable("Cliente");
                 });
@@ -298,9 +295,6 @@ namespace HotelApi.Migrations
                     b.Property<int>("ReservaId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TipoHabitacionId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("HabitacionId");
@@ -308,8 +302,6 @@ namespace HotelApi.Migrations
                     b.HasIndex("PensionId");
 
                     b.HasIndex("ReservaId");
-
-                    b.HasIndex("TipoHabitacionId");
 
                     b.ToTable("DetalleReserva");
                 });
@@ -424,13 +416,13 @@ namespace HotelApi.Migrations
                     b.Property<DateTime>("Creacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TipoHabitacionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
+                    b.Property<string>("NombreArchivo")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("TipoHabitacionId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -520,9 +512,6 @@ namespace HotelApi.Migrations
 
                     b.HasIndex("ClienteId");
 
-                    b.HasIndex("Codigo")
-                        .IsUnique();
-
                     b.HasIndex("EstadoId");
 
                     b.ToTable("Reserva");
@@ -588,9 +577,6 @@ namespace HotelApi.Migrations
 
                     b.Property<int?>("ReservaId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Tipo")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -713,9 +699,6 @@ namespace HotelApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Username")
-                        .IsUnique();
-
                     b.ToTable("Usuario");
                 });
 
@@ -738,15 +721,11 @@ namespace HotelApi.Migrations
                 {
                     b.HasOne("HotelApi.Models.DetalleReserva", "DetalleReserva")
                         .WithMany()
-                        .HasForeignKey("DetalleReservaId");
-
-                    b.HasOne("HotelApi.Models.Reserva", "Reserva")
-                        .WithMany()
-                        .HasForeignKey("ReservaId");
+                        .HasForeignKey("DetalleReservaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("DetalleReserva");
-
-                    b.Navigation("Reserva");
                 });
 
             modelBuilder.Entity("HotelApi.Models.Checkin", b =>
@@ -811,17 +790,11 @@ namespace HotelApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HotelApi.Models.TipoHabitacion", "TipoHabitacion")
-                        .WithMany()
-                        .HasForeignKey("TipoHabitacionId");
-
                     b.Navigation("Habitacion");
 
                     b.Navigation("Pension");
 
                     b.Navigation("Reserva");
-
-                    b.Navigation("TipoHabitacion");
                 });
 
             modelBuilder.Entity("HotelApi.Models.Habitacion", b =>
