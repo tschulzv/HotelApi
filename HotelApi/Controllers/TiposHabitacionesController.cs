@@ -192,13 +192,18 @@ public class TiposHabitacionesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTipoHabitacion(int id)
     {
-        var tipo = await _context.TipoHabitacion.FindAsync(id);
+        var tipo = await _context.TipoHabitacion
+        .Include(t => t.Habitaciones)
+        .FirstOrDefaultAsync(t => t.Id == id);
+
         if (tipo == null)
             return NotFound();
-
+        // Verificamos si hay habitaciones asociadas
+        if (tipo.Habitaciones != null && tipo.Habitaciones.Any())
+            return BadRequest("No se puede eliminar el tipo de habitación porque tiene habitaciones asociadas.");
+        
         tipo.Activo = false;
         _context.Entry(tipo).State = EntityState.Modified;
-
         await _context.SaveChangesAsync();
         return NoContent();
     }
