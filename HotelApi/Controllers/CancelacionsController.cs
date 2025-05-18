@@ -28,7 +28,7 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CancelacionDTO>>> GetCancelacion()
         {
-            var cancelaciones = await _context.Cancelacion.Where(c => c.Activo).ToListAsync();
+            var cancelaciones = await _context.Cancelacion.Where(c => c.Activo).Include(c => c.Reserva).ToListAsync();
             var cancelacionDTOs = cancelaciones.Select(ca => ToDTO(ca));
             return Ok(cancelacionDTOs);
         }
@@ -37,7 +37,7 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CancelacionDTO>> GetCancelacion(int id)
         {
-            var cancelacion = await _context.Cancelacion.Where(c => c.Activo && c.Id == id).FirstOrDefaultAsync();
+            var cancelacion = await _context.Cancelacion.Where(c => c.Activo && c.Id == id).Include(c => c.Reserva).FirstOrDefaultAsync();
 
             if (cancelacion == null)
             {
@@ -192,6 +192,8 @@ namespace HotelApi.Controllers
             return new CancelacionDTO
             {
                 Id = ca.Id,
+                ReservaId = ca.ReservaId,
+                Reserva = ca.ReservaId != null ? ReservasController.ToDTO(ca.Reserva) : null,
                 DetalleReservaId = ca.DetalleReservaId,
                 Motivo = ca.Motivo,
                 Activo = ca.Activo

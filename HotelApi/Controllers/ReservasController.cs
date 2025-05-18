@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using HotelApi.DTOs;
 using System.Net.Mail;
 using System.Net;
+using HotelApi.DTOs.Request;
 
 namespace HotelApi.Controllers
 {
@@ -64,9 +65,9 @@ namespace HotelApi.Controllers
         }
 
         //obtener reserva con determinado codigo
-        // GET: api/Reservas/RES001
-        [HttpGet("{codigo}")]
-        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReserva(string codigo)
+        // GET: api/Reservas/code/RES001
+        [HttpGet("/code/{codigo}")]
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigo(string codigo)
         {
             var res = await _context.Reserva
             .Where(r => r.Codigo == codigo && r.EstadoId == 1)
@@ -249,32 +250,15 @@ namespace HotelApi.Controllers
             _context.Reserva.Add(res);
             await _context.SaveChangesAsync();
 
-            // Obtener el correo del cliente
-            var cliente = await _context.Cliente.FindAsync(resDto.ClienteId);
-            
-            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
-            {
-                var nombreCliente = cliente.Nombre + ' ' + cliente.Apellido;
-                try
-                {
-                    EnviarEmailConfirmacion(resDto, nombreCliente, cliente.Email, res.Codigo);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error al enviar el email: {ex.Message}");
-                }
-            }
-
             return CreatedAtAction("GetReserva", new { id = res.Id }, resDto);
         }
 
-        // confirmar una reserva
-        // PUT: api/Reservas/5/confirm
-
+        // CONFIRMAR RESERVA, ASIGNAR HABITACIONES Y MANDAR EMAIL DE CONFIRMACION
         [HttpPut("{id}/confirm")]
         public async Task<IActionResult> ConfirmarReserva(int id, ReservaDTO resDTO)
         {
-        
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             var res = await _context.Reserva
                 .Include(r => r.Detalles)
                 .FirstOrDefaultAsync(r => r.Id == id);
@@ -282,14 +266,10 @@ namespace HotelApi.Controllers
             if (res == null)
                 return NotFound();
 
-            // Actualizar estado a confirmada (id 2)
-            res.EstadoId = 2;
-            res.Actualizacion = DateTime.Now;
-
             var detallesDTO = resDTO.Detalles ?? new List<DetalleReservaDTO>();
             var idsDTO = detallesDTO.Select(d => d.Id).ToHashSet();
 
-            // Desactivar detalles que no vienen en el DTO (soft delete)
+            // Desactivar detalles que no están en el DTO
             foreach (var detalle in res.Detalles)
             {
                 if (!idsDTO.Contains(detalle.Id))
@@ -301,19 +281,25 @@ namespace HotelApi.Controllers
             // Agregar o actualizar detalles del DTO
             foreach (var dto in detallesDTO)
             {
+                if (dto.HabitacionId == null)
+                {
+                    return BadRequest("Cada detalle debe tener una habitación asignada.");
+                }
+
                 var existente = res.Detalles.FirstOrDefault(d => d.Id == dto.Id);
                 if (existente != null)
                 {
                     // Actualizar
                     existente.HabitacionId = dto.HabitacionId;
+                    existente.TipoHabitacionId = dto.TipoHabitacionId;
                     existente.CantidadAdultos = dto.CantidadAdultos;
                     existente.CantidadNinhos = dto.CantidadNinhos;
                     existente.PensionId = dto.PensionId;
-                    existente.Activo = true; // Revivir si estaba inactivo
+                    existente.Activo = true;
                 }
                 else
                 {
-                    // Nuevo detalle
+                    // Agregar nuevo
                     res.Detalles.Add(new DetalleReserva
                     {
                         HabitacionId = dto.HabitacionId,
@@ -325,6 +311,61 @@ namespace HotelApi.Controllers
                     });
                 }
             }
+
+            // Validar que haya al menos un detalle activo
+            if (!res.Detalles.Any(d => d.Activo && d.HabitacionId != null))
+            {
+                return BadRequest("Debe asignar al menos una habitación activa para confirmar la reserva.");
+            }
+
+            // Confirmar reserva
+            res.EstadoId = 2; // Confirmada
+            res.Actualizacion = DateTime.Now;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                if (!ReservaExists(id))
+                    return NotFound();
+                else
+                    throw;
+            }
+
+            // Enviar email de confirmación
+            var cliente = await _context.Cliente.FindAsync(resDTO.ClienteId);
+            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
+            {
+                var nombreCliente = cliente.Nombre + " " + cliente.Apellido;
+                try
+                {
+                    EnviarEmailConfirmacion(resDTO, nombreCliente, cliente.Email, res.Codigo);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al enviar el email: {ex.Message}");
+                }
+            }
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/reject")]
+        public async Task<IActionResult> RechazarReserva(int id)
+        {
+
+            var res = await _context.Reserva.FirstOrDefaultAsync(r => r.Id == id);
+
+            if (res == null)
+                return NotFound();
+
+            // cambiar a estado "Rechazada"
+            res.EstadoId = 6;
+            res.Actualizacion = DateTime.Now;
 
             try
             {
@@ -341,6 +382,28 @@ namespace HotelApi.Controllers
             return NoContent();
         }
 
+
+
+        [HttpPost("asignarHabitaciones")]
+        public async Task<IActionResult> AsignarHabitaciones([FromBody] AsignarHabitacionesRequest request)
+        {
+            foreach (var asignacion in request.Asignaciones)
+            {
+                var detalle = await _context.DetalleReserva
+                    .FirstOrDefaultAsync(d => d.Id == asignacion.DetalleReservaId && d.ReservaId == request.ReservaId);
+
+                if (detalle == null)
+                {
+                    return NotFound($"No se encontró el detalle con ID {asignacion.DetalleReservaId} para la reserva {request.ReservaId}");
+                }
+
+                detalle.HabitacionId = asignacion.HabitacionId;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Habitaciones asignadas correctamente." });
+        }
 
 
         // DELETE: api/Reservas/5
@@ -428,8 +491,10 @@ namespace HotelApi.Controllers
                     var capacidadRequerida = detalle.CantidadAdultos + detalle.CantidadNinhos;
 
                     var habitaciones = await _context.Habitacion
-                        .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId && h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
-                        .ToListAsync();
+                    .Include(h => h.TipoHabitacion)
+                    .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId &&
+                                h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
+                    .ToListAsync();
 
                     var habitacionesOcupadas = await _context.DetalleReserva
                         .Where(d => d.Activo &&
@@ -485,7 +550,7 @@ namespace HotelApi.Controllers
             {
                 Id = re.Id,
                 ClienteId = re.ClienteId,
-                NombreCliente = re.Cliente.Nombre + " " + re.Cliente.Apellido,
+                NombreCliente = re.Cliente != null ? re.Cliente?.Nombre + " " + re.Cliente?.Apellido : " ",
                 Codigo = re.Codigo,
                 FechaIngreso = re.FechaIngreso,
                 FechaSalida = re.FechaSalida,
