@@ -215,7 +215,6 @@ namespace HotelApi.Controllers
             habitacion.Observaciones = habitacionDTO.Observaciones;
             habitacion.Activo = habitacionDTO.Activo;
             habitacion.Actualizacion = DateTime.Now; // Actualizar la fecha de actualización
-
             _context.Entry(habitacion).State = EntityState.Modified;
 
             try
