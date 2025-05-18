@@ -79,6 +79,7 @@ namespace HotelApi.Controllers
         [HttpPost("disponibles")]
         public async Task<ActionResult<IEnumerable<Habitacion>>> GetHabitacionesDisponibles([FromBody] DisponibilidadRequest request)
         {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine("Recibiendo solicitud de disponibilidad:");
             Console.WriteLine($"  CheckIn: {request.CheckIn}");
@@ -112,6 +113,9 @@ namespace HotelApi.Controllers
 
             var habitacionesDisponibles = await _context.Habitacion
                 .Include(h => h.TipoHabitacion)
+                    .ThenInclude(th => th.Servicios)
+                .Include(h => h.TipoHabitacion)
+                    .ThenInclude(th => th.ImagenesHabitaciones)
                 .Where(h =>
                     !habitacionesOcupadas.Contains(h.Id) &&
                     h.Activo)
@@ -158,7 +162,34 @@ namespace HotelApi.Controllers
                 Console.WriteLine("  No se encontraron habitaciones disponibles que cumplan con los criterios de capacidad.");
             }
             Console.WriteLine("--------------------------------------------------");
-            return habitacionesFiltradas;
+
+            // C#
+            var resultado = habitacionesFiltradas
+            .GroupBy(h => h.TipoHabitacion)
+            .Select(g => new TipoHabitacionDTO
+            {
+                Id = g.Key.Id,
+                Nombre = g.Key.Nombre,
+                Descripcion = g.Key.Descripcion,
+                PrecioBase = g.Key.PrecioBase,
+                CantidadDisponible = g.Count(),
+                MaximaOcupacion = g.Key.MaximaOcupacion,
+                Tamanho = g.Key.Tamanho,
+                Servicios = g.Key.Servicios?.Select(s => new ServicioDTO
+                {
+                    Id = s.Id,
+                    Nombre = s.Nombre,
+                    IconName = s.IconName
+                }).ToList() ?? new List<ServicioDTO>(),
+                Imagenes = g.Key.ImagenesHabitaciones?.Select(i => new ImagenHabitacionDTO
+                {
+                    Id = i.Id,
+                    Url = $"{baseUrl}/imagenes/{i.Url}"
+                }).ToList() ?? new List<ImagenHabitacionDTO>()
+            })
+            .ToList();
+
+            return Ok(resultado);
         }
 
 
