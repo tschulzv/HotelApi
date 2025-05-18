@@ -8,6 +8,8 @@
 
         public int? ReservaId { get; set; }
 
+        public ReservaDTO? Reserva { get; set; }
+
         public string? Motivo { get; set; }
 
         public bool Activo { get; set; }
