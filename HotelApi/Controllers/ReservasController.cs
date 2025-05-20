@@ -35,7 +35,8 @@ namespace HotelApi.Controllers
             .Where(r => r.Activo)
             .Include(r => r.Detalles)
                 .ThenInclude(d => d.Habitacion)
-                .ThenInclude(h => h.TipoHabitacion)
+            .Include(r => r.Detalles)
+                .ThenInclude(d => d.TipoHabitacion)
             .Include(r => r.Cliente)
             .ToListAsync();
 

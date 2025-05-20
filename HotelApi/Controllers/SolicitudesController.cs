@@ -33,6 +33,7 @@ namespace HotelApi.Controllers
                     .ThenInclude(r => r.Cliente)
                 .Include(s => s.Reserva)
                     .ThenInclude(r => r.Detalles)
+                        .ThenInclude(d => d.TipoHabitacion)
                 .Include(s => s.Cancelacion)
                 .Include(s => s.Consulta)
                 .ToListAsync();
@@ -50,6 +51,7 @@ namespace HotelApi.Controllers
                     .ThenInclude(r => r.Cliente)
                 .Include(s => s.Reserva)
                     .ThenInclude(r => r.Detalles) 
+                        .ThenInclude(d => d.TipoHabitacion)
                 .Include(s => s.Cancelacion)
                 .Include(s => s.Consulta)
                 .FirstOrDefaultAsync();
