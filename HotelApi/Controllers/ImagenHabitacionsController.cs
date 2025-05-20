@@ -138,25 +138,17 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
 
-            imagenHabitacion.Activo = false;
-            imagenHabitacion.Actualizacion = DateTime.Now;
-            _context.Entry(imagenHabitacion).State = EntityState.Modified;
+            // Eliminar archivo físico
+            var wwwRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var imagenPath = Path.Combine(wwwRootPath, "imagenes", Path.GetFileName(imagenHabitacion.Url));
+            if (System.IO.File.Exists(imagenPath))
+            {
+                System.IO.File.Delete(imagenPath);
+            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ImagenHabitacionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            // Eliminar de la base de datos
+            _context.ImagenHabitacion.Remove(imagenHabitacion);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
