@@ -489,6 +489,20 @@ namespace HotelApi.Controllers
                 else
                     throw;
             }
+            Console.WriteLine("clienteid", res.ClienteId);
+            var cliente = await _context.Cliente.FindAsync(res.ClienteId);
+            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
+            {
+                var nombreCliente = cliente.Nombre + " " + cliente.Apellido;
+                try
+                {
+                    EnviarEmailRechazo(nombreCliente, cliente.Email);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al enviar el email: {ex.Message}"); 
+                }
+            }
 
             return NoContent();
         }
@@ -696,6 +710,7 @@ namespace HotelApi.Controllers
             };
         }
 
+        // correo de confirmacion
         private static string GenerarCuerpoCorreo(ReservaDTO reserva, string nombreCliente, string codigo)
         {
             var detallesHtml = string.Join("", reserva.Detalles.Select(d =>
@@ -745,6 +760,27 @@ namespace HotelApi.Controllers
         }
 
 
+
+        // cuerpo correo de rechazo
+        private static string GenerarCuerpoCorreoRechazo(string nombreCliente)
+        {
+            return $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <h2 style='color: #c0392b;'>Reserva No Confirmada</h2>
+                <p>Estimado/a <strong>{nombreCliente}</strong>,</p>
+                <p>Lamentamos informarle que su solicitud de reserva en <strong>Hotel Los Álamos no ha podido ser confirmada.</p>
+        
+                <p>Le pedimos disculpas por los inconvenientes que esto pudiera ocasionarle.</p>
+        
+                <p>Si desea realizar una nueva solicitud o necesita asistencia adicional, no dude en ponerse en contacto con nosotros.</p>
+
+                <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>
+            </body>
+            </html>";
+        }
+
+
         private static void EnviarEmailConfirmacion(ReservaDTO res, string nombreCliente, string emailDestino, string codigoReserva)
         {
             try
@@ -782,9 +818,51 @@ namespace HotelApi.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine("Error enviando email: " + ex.Message);
-                // Aquí puedes agregar logging o manejar la excepción como prefieras
             }
         }
+
+        // enviar email rechazo
+        private static void EnviarEmailRechazo(string nombreCliente, string emailDestino)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("hotellosalamospy@gmail.com", "Hotel Los Alamos");
+
+              
+                var toAddress = new MailAddress(emailDestino);
+                const string fromPassword = "qnacddvmoiwxpfkl";
+
+                string subject = "Confirmación de Reserva";
+
+                string body = GenerarCuerpoCorreoRechazo(nombreCliente);
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando email: " + ex.Message);
+
+            }
+        }
+
     }
 }
 
