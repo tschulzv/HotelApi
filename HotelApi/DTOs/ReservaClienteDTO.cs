@@ -9,5 +9,7 @@ namespace HotelApi.DTOs
         public ClienteDTO InformacionCliente { get; set; }
         [Required]
         public ReservaDTO InformacionReserva { get; set; }
+        [Required]
+        public SolicitudDTO InformacionSolicitud { get; set; }
     }
 }
