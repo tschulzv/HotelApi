@@ -268,6 +268,7 @@ namespace HotelApi.Controllers
             Cliente clienteParaReserva;
             var infoClienteDto = resDto.InformacionCliente;
             var infoReservaDto = resDto.InformacionReserva;
+            var infoSolicitudDto = resDto.InformacionSolicitud;
 
             clienteParaReserva = await _context.Cliente
                                    .FirstOrDefaultAsync(c => c.NumDocumento == infoClienteDto.NumDocumento);
@@ -325,6 +326,18 @@ namespace HotelApi.Controllers
 
             _context.Reserva.Add(res);
 
+            var nuevaSolicitud = new Solicitud
+            {
+                Reserva = res,
+                CancelacionId = null,  
+                ConsultaId = null,     
+                Tipo = infoSolicitudDto.Tipo ?? "Reserva", 
+                EsLeida = false,
+                Creacion = DateTime.UtcNow
+            };
+
+            _context.Solicitud.Add(nuevaSolicitud);
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -337,9 +350,10 @@ namespace HotelApi.Controllers
             // Preparar una respuesta más útil
             var respuestaDto = new
             {
-                mensaje = "Reserva creada exitosamente.",
+                mensaje = "Reserva y solicitud creadas exitosamente.",
                 reservaId = res.Id,
                 codigoReserva = res.Codigo,
+                solicitudId = nuevaSolicitud.Id,
                 clienteId = clienteParaReserva.Id,
                 clienteNuevo = clienteEsNuevo,
                 emailCliente = clienteParaReserva.Email,
