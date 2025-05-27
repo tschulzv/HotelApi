@@ -189,6 +189,17 @@ namespace HotelApi.Controllers
             })
             .ToList();
 
+            if (request.TipoHabitacionId.HasValue)
+            {
+                Console.WriteLine($"Filtrando habitaciones por TipoHabitacionId: {request.TipoHabitacionId.Value}");
+                habitacionesFiltradas = habitacionesFiltradas
+                    .Where(h => h.TipoHabitacionId == request.TipoHabitacionId.Value)
+                    .ToList();
+            }else
+            {
+                Console.WriteLine("No se especificó TipoHabitacionId, se devolverán todas las habitaciones disponibles.");
+            }
+
             return Ok(resultado);
         }
 
