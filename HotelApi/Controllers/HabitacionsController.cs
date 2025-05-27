@@ -48,7 +48,7 @@ namespace HotelApi.Controllers
         }
 
         // GET: api/Habitacions/5
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<HabitacionDTO>> GetHabitacion(int id)
         {
             var habitacion = await _context.Habitacion
