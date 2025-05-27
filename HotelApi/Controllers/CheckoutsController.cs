@@ -92,16 +92,89 @@ namespace HotelApi.Controllers
         [HttpPost]
         public async Task<ActionResult<CheckoutDTO>> PostCheckout(CheckoutDTO checkoutDTO)
         {
-            var checkout = new Checkout
+            if (!ModelState.IsValid)
             {
-                Id = checkoutDTO.Id,
-                ReservaId = checkoutDTO.ReservaId,
-                Activo = true
-            };
-            _context.Checkout.Add(checkout);
-            await _context.SaveChangesAsync();
+                return BadRequest(ModelState);
+            }
 
-            return CreatedAtAction("GetCheckout", new { id = checkout.Id }, checkout);
+            // --- IDs de Estado ---
+            const int ID_ESTADO_RESERVA_CHECKOUT = 5;
+            const int ID_ESTADO_RESERVA_CHECKIN = 4;
+            const int ID_ESTADO_HABITACION_DISPONIBLE = 1;
+
+            var reserva = await _context.Reserva
+                .Include(r => r.Detalles)
+                    .ThenInclude(dr => dr.Habitacion)
+                .FirstOrDefaultAsync(r => r.Id == checkoutDTO.ReservaId && r.Activo);
+
+            if (reserva == null)
+            {
+                return NotFound(new { Mensaje = $"Reserva con ID {checkoutDTO.ReservaId} no encontrada o no está activa." });
+            }
+
+            if (reserva.EstadoId != ID_ESTADO_RESERVA_CHECKIN)
+            {
+                return BadRequest(new { Mensaje = $"No se puede hacer Check-Out. La reserva (ID: {reserva.Id}) no está en estado Check-In (actualmente está en estado ID: {reserva.EstadoId})." });
+            }
+
+            if (reserva.Detalles != null && reserva.Detalles.Any())
+            {
+                foreach (var detalleReserva in reserva.Detalles)
+                {
+                    if (detalleReserva.Habitacion != null)
+                    {
+                        detalleReserva.Habitacion.EstadoHabitacionId = ID_ESTADO_HABITACION_DISPONIBLE;
+                        detalleReserva.Habitacion.Actualizacion = DateTime.UtcNow;
+                        _context.Entry(detalleReserva.Habitacion).State = EntityState.Modified;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Advertencia: DetalleReserva ID {detalleReserva.Id} para Reserva ID {reserva.Id} no tiene una Habitación asociada.");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Advertencia: La reserva ID {reserva.Id} (en Check-In) no tiene detalles de habitación para actualizar a disponible.");
+            }
+            reserva.EstadoId = ID_ESTADO_RESERVA_CHECKOUT;
+            reserva.Actualizacion = DateTime.UtcNow;
+            _context.Entry(reserva).State = EntityState.Modified;
+
+
+           
+            var checkout = new Checkout 
+            {
+                ReservaId = checkoutDTO.ReservaId,
+                Activo = true,
+                Creacion = DateTime.UtcNow,
+                Actualizacion = DateTime.UtcNow
+            };
+
+            _context.Checkout.Add(checkout);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { Mensaje = "Error al guardar los datos del check-out.", Detalle = ex.InnerException?.Message ?? ex.Message });
+            }
+            catch (Exception ex) // Captura general
+            {
+                return StatusCode(500, new { Mensaje = "Ocurrió un error inesperado durante el check-out.", Detalle = ex.Message });
+            }
+
+            // Preparar el DTO de respuesta. El checkoutDTO original podría no tener el Id generado.
+            var respuestaDto = new CheckoutDTO
+            {
+                Id = checkout.Id,
+                ReservaId = checkout.ReservaId,
+                Activo = checkout.Activo
+            };
+
+            return CreatedAtAction(nameof(GetCheckout), new { id = checkout.Id }, respuestaDto);
         }
 
         // DELETE: api/Checkouts/5
