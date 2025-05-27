@@ -26,18 +26,33 @@ namespace HotelApi.Data
             // Seed Servicios
             var servicios = new List<Servicio>
             {
-                new Servicio { Nombre = "WiFi", IconName = "wifi", Creacion = now, Actualizacion = now, Activo = true },
-                new Servicio { Nombre = "Piscina", IconName = "pool", Creacion = now, Actualizacion = now, Activo = true },
-                new Servicio { Nombre = "Estacionamiento", IconName = "local_parking", Creacion = now, Actualizacion = now, Activo = true }
+                new Servicio { Nombre = "Minibar", IconName = "local_bar", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Balcón", IconName = "deck", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Caja fuerte", IconName = "lock", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Secador de pelo", IconName = "hair_dryer", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Servicio de lavandería", IconName = "local_laundry_service", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Vista al mar", IconName = "beach_access", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Acceso al spa", IconName = "self_care", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Jacuzzi", IconName = "bathtub", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Wi-Fi", IconName = "wifi", Creacion = now, Actualizacion = now, Activo = true },
+                // Servicios adicionales
+                new Servicio { Nombre = "Aire acondicionado", IconName = "ac_unit", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Calefacción", IconName = "thermostat", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Recepción 24 horas", IconName = "room_service", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Gimnasio", IconName = "fitness_center", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Traslado al aeropuerto", IconName = "airport_shuttle", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Adaptado para movilidad reducida", IconName = "accessible", Creacion = now, Actualizacion = now, Activo = true },
+                new Servicio { Nombre = "Terraza / Jardín", IconName = "yard", Creacion = now, Actualizacion = now, Activo = true }
             };
+
             context.Servicio.AddRange(servicios);
 
             // Seed TipoDocumento
             var tiposDocumento = new List<TipoDocumento>
             {
-                new TipoDocumento { Nombre = "DNI", Creacion = now, Actualizacion = now, Activo = true },
+                new TipoDocumento { Nombre = "Cédula de Identidad Paraguaya", Creacion = now, Actualizacion = now, Activo = true },
                 new TipoDocumento { Nombre = "Pasaporte", Creacion = now, Actualizacion = now, Activo = true },
-                new TipoDocumento { Nombre = "Carnet de extranjería", Creacion = now, Actualizacion = now, Activo = true }
+                new TipoDocumento { Nombre = "Documento Extranjero", Creacion = now, Actualizacion = now, Activo = true }
             };
             context.TipoDocumento.AddRange(tiposDocumento);
 
@@ -46,25 +61,85 @@ namespace HotelApi.Data
             {
                 new TipoHabitacion
                 {
+                    // El 'Id' del JSON no se incluye directamente aquí si es auto-generado por la base de datos.
                     Nombre = "Estándar",
-                    Descripcion = "Ideal para 2 personas, simple.",
-                    PrecioBase = 45.00m,
+                    Descripcion = "Nuestra Habitación Estándar es la opción ideal para viajeros que buscan comodidad y funcionalidad a un precio accesible. Equipada con todo lo esencial, ofrece un espacio acogedor y práctico para garantizar un descanso reparador. Disfruta de una cama cómoda, baño privado y las comodidades básicas para una estancia placentera. Es perfecta para quienes priorizan la eficiencia sin sacrificar el confort.",
+                    PrecioBase = 40.00m, // Usa 'm' para indicar que es un decimal
                     CantidadDisponible = 10,
+                    MaximaOcupacion = 2,
+                    Tamanho = 30,
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true,
-                    Servicios = new List<Servicio> { servicios[0], servicios[2] } // WiFi y Estacionamiento
+                    ImagenesHabitaciones = new List<ImagenHabitacion>
+                    {
+                        new ImagenHabitacion { Url = "d94dfde4-e66b-49d9-a95d-24b224a12a5e.jpg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "3c6b1771-e541-4b95-8536-36636f057253.jpg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "dd4b9aec-51eb-47af-a69a-f97f46cc3e74.png", Creacion = now, Actualizacion = now, Activo = true }
+                    }
+                    // No se incluyen servicios aquí ya que tu JSON de entrada no los contenía.
+                    // Si tienes servicios, necesitarías definirlos primero y luego referenciarlos aquí.
+                    // Ejemplo: Servicios = new List<Servicio> { servicios[0], servicios[2] }
                 },
                 new TipoHabitacion
                 {
+                    // Id = 2,
                     Nombre = "Deluxe",
-                    Descripcion = "Cómoda para dos personas. Cama matrimonial o dos camas.",
-                    PrecioBase = 75.00m,
-                    CantidadDisponible = 8,
+                    Descripcion = "La Habitación Deluxe eleva tu experiencia de hospedaje. Más espaciosa y con un diseño elegante, esta habitación te ofrece un ambiente sofisticado y relajante. Disfruta de acabados de mayor calidad, mobiliario confortable y servicios adicionales pensados para tu bienestar. Es la elección perfecta para aquellos que desean un toque extra de lujo y amplitud durante su visita.",
+                    PrecioBase = 30.00m,
+                    CantidadDisponible = 5,
+                    MaximaOcupacion = 3,
+                    Tamanho = 40,
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true,
-                    Servicios = new List<Servicio> { servicios[0], servicios[1], servicios[2] } // Todos
+                    ImagenesHabitaciones = new List<ImagenHabitacion>
+                    {
+                        new ImagenHabitacion { Url = "d7334f63-0091-43ff-9599-b630ac628c62.jpeg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "d7c7c54e-0159-46c1-8ffc-650fdb4a5ee4.jpeg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "eb4e0082-46d0-426e-a645-5aeaf2c1e0e5.jpeg", Creacion = now, Actualizacion = now, Activo = true }
+                    }
+                    // Servicios no incluidos.
+                },
+                new TipoHabitacion
+                {
+                    // Id = 3,
+                    Nombre = "Ejecutiva",
+                    Descripcion = "Diseñada pensando en el viajero de negocios, la Habitación Ejecutiva combina confort y funcionalidad para optimizar tu productividad. Además de un espacio elegante, cuenta con un amplio escritorio de trabajo, acceso a internet de alta velocidad y servicios adaptados a tus necesidades profesionales. Ofrece un entorno tranquilo y eficiente para que puedas trabajar y relajarte sin interrupciones.",
+                    PrecioBase = 60.00m,
+                    CantidadDisponible = 4,
+                    MaximaOcupacion = 4,
+                    Tamanho = 60,
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true,
+                    ImagenesHabitaciones = new List<ImagenHabitacion>
+                    {
+                        new ImagenHabitacion { Url = "dc1cf618-857d-4222-8e8f-cb27ad9233d1.png", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "502d1b20-7f27-4130-a9e3-5c536bae365a.png", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "8911fc9d-229d-45d7-877c-25afbb010999.png", Creacion = now, Actualizacion = now, Activo = true }
+                    }
+                    // Servicios no incluidos.
+                },
+                new TipoHabitacion
+                {
+                    // Id = 4,
+                    Nombre = "Presidencial",
+                    Descripcion = "Experimenta la máxima expresión de lujo y exclusividad en nuestra Habitación Presidencial. Este espacio sublime ofrece una experiencia inigualable con un diseño grandioso, áreas de estar y dormitorio separadas, y vistas panorámicas. Equipada con las más finas amenidades y un servicio personalizado, es ideal para quienes buscan privacidad, opulencia y un nivel de confort sin precedentes. Perfecta para ocasiones especiales o estancias donde el lujo es la prioridad.",
+                    PrecioBase = 100.00m,
+                    CantidadDisponible = 4,
+                    MaximaOcupacion = 5,
+                    Tamanho = 100,
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true,
+                    ImagenesHabitaciones = new List<ImagenHabitacion>
+                    {
+                        new ImagenHabitacion { Url = "c460bc63-4670-4c84-a561-e00945e9dacc.jpg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "501fbf5d-d302-424b-a316-c28b3f890458.jpg", Creacion = now, Actualizacion = now, Activo = true },
+                        new ImagenHabitacion { Url = "4f2e70e8-7986-4bdf-bf94-94cd11a47452.png", Creacion = now, Actualizacion = now, Activo = true }
+                    }
+                    // Servicios no incluidos.
                 }
             };
             context.TipoHabitacion.AddRange(tiposHabitacion);
@@ -91,7 +166,7 @@ namespace HotelApi.Data
             };
             context.EstadoReserva.AddRange(estadosReserva);
             context.SaveChanges();
-
+            /*
             // Seed Clientes
             var clientes = new List<Cliente>
             {
@@ -126,6 +201,7 @@ namespace HotelApi.Data
             };
             context.Cliente.AddRange(clientes);
             context.SaveChanges();
+            */
             //Seed EstadoHabitacion
 
             var estadoHabitaciones = new List<EstadoHabitacion>
@@ -135,45 +211,129 @@ namespace HotelApi.Data
                 new EstadoHabitacion {Nombre = "EN LIMPIEZA", Creacion = now, Actualizacion = now, Activo = true},
                 new EstadoHabitacion {Nombre = "LATE-CHECKOUT", Creacion = now, Actualizacion = now, Activo = true}
             };
+
             context.EstadoHabitacion.AddRange(estadoHabitaciones);
             context.SaveChanges();
+
+
             // Seed Habitaciones
+            // Asegúrate de que 'now' sea una variable DateTime ya definida en tu contexto, por ejemplo:
+            // DateTime now = DateTime.UtcNow; // O DateTime.Now;
+
             var habitaciones = new List<Habitacion>
-            {
+{
+                // Habitaciones Estándar (usando tiposHabitacion[0].Id)
                 new Habitacion
                 {
-                    TipoHabitacionId = tiposHabitacion[0].Id,
+                    TipoHabitacionId = tiposHabitacion[0].Id, // Estándar
                     NumeroHabitacion = 101,
-                    EstadoHabitacionId = 1,
-                    Observaciones="prueba1",
+                    EstadoHabitacionId = 1, // Asume un estado inicial como "Disponible"
+                    Observaciones = "Cerca del ascensor. Vista interior.",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
                 },
                 new Habitacion
                 {
-                    TipoHabitacionId = tiposHabitacion[0].Id,
+                    TipoHabitacionId = tiposHabitacion[0].Id, // Estándar
                     NumeroHabitacion = 102,
                     EstadoHabitacionId = 1,
-                    Observaciones="prueba2",
+                    Observaciones = "Cama doble. Silenciosa.",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
                 },
                 new Habitacion
                 {
-                    TipoHabitacionId = tiposHabitacion[1].Id,
+                    TipoHabitacionId = tiposHabitacion[0].Id, // Estándar
+                    NumeroHabitacion = 103,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Dos camas individuales.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[0].Id, // Estándar
+                    NumeroHabitacion = 104,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Con vistas a la ciudad. Balcón pequeño.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+
+                // Habitaciones Deluxe (usando tiposHabitacion[1].Id)
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[1].Id, // Deluxe
                     NumeroHabitacion = 201,
                     EstadoHabitacionId = 1,
-                    Observaciones="prueba3",
+                    Observaciones = "Amplia con sofá. Vista a la piscina.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[1].Id, // Deluxe
+                    NumeroHabitacion = 202,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Cama king-size. Baño espacioso.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[1].Id, // Deluxe
+                    NumeroHabitacion = 203,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Con balcón grande.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+
+                // Habitaciones Ejecutivas (usando tiposHabitacion[2].Id)
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[2].Id, // Ejecutiva
+                    NumeroHabitacion = 301,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Ideal para viajeros de negocios. Escritorio amplio.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[2].Id, // Ejecutiva
+                    NumeroHabitacion = 302,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "Suite con pequeña sala de estar.",
+                    Creacion = now,
+                    Actualizacion = now,
+                    Activo = true
+                },
+
+                // Habitaciones Presidenciales (usando tiposHabitacion[3].Id)
+                new Habitacion
+                {
+                    TipoHabitacionId = tiposHabitacion[3].Id, // Presidencial
+                    NumeroHabitacion = 401,
+                    EstadoHabitacionId = 1,
+                    Observaciones = "La suite principal. Vistas panorámicas y jacuzzi.",
                     Creacion = now,
                     Actualizacion = now,
                     Activo = true
                 }
             };
+
             context.Habitacion.AddRange(habitaciones);
             context.SaveChanges();
-
+            /*
             // Seed Reservas
             var reservas = new List<Reserva>
             {
@@ -376,6 +536,7 @@ namespace HotelApi.Data
                     Activo = true
                 }
             };
+            */
         }
     }
 }

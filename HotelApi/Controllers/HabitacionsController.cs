@@ -76,6 +76,7 @@ namespace HotelApi.Controllers
             return habitacion;
         }
 
+
         [HttpPost("disponibles")]
         public async Task<ActionResult<IEnumerable<Habitacion>>> GetHabitacionesDisponibles([FromBody] DisponibilidadRequest request)
         {
@@ -199,7 +200,7 @@ namespace HotelApi.Controllers
             {
                 Console.WriteLine("No se especificó TipoHabitacionId, se devolverán todas las habitaciones disponibles.");
             }
-
+            
             return Ok(resultado);
         }
 
