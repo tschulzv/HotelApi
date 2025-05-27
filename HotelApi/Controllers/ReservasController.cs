@@ -254,6 +254,102 @@ namespace HotelApi.Controllers
             return CreatedAtAction("GetReserva", new { id = res.Id }, resDto);
         }
 
+        // POST: api/Reservas/Cliente
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("Cliente")]
+        public async Task<ActionResult<ReservaDTO>> PostReservaCliente(ReservaClienteDTO resDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Mensaje = "Modelo inválido", Errores = errores });
+            }
+
+            Cliente clienteParaReserva;
+            var infoClienteDto = resDto.InformacionCliente;
+            var infoReservaDto = resDto.InformacionReserva;
+
+            clienteParaReserva = await _context.Cliente
+                                   .FirstOrDefaultAsync(c => c.NumDocumento == infoClienteDto.NumDocumento);
+
+            bool clienteEsNuevo = false;
+            if (clienteParaReserva == null)
+            {
+                clienteParaReserva = new Cliente
+                {
+                    Nombre = infoClienteDto.Nombre,
+                    Apellido = infoClienteDto.Apellido,
+                    Email = infoClienteDto.Email,
+                    Telefono = infoClienteDto.Telefono,
+                    NumDocumento = infoClienteDto.NumDocumento,
+                    Ruc = infoClienteDto.Ruc,
+                    TipoDocumentoId = infoClienteDto.TipoDocumentoId,
+                    Nacionalidad = infoClienteDto.Nacionalidad,
+                    Comentarios = infoClienteDto.Comentarios,
+                    Activo = true,
+                    Creacion = DateTime.UtcNow
+                };
+                _context.Cliente.Add(clienteParaReserva);
+                clienteEsNuevo = true;
+            }   
+
+            var codigo = await GenerarCodigoUnicoAsync();
+            var res = new Reserva
+            {
+                Cliente = clienteParaReserva,
+                Codigo = codigo,
+                FechaIngreso = infoReservaDto.FechaIngreso,
+                FechaSalida = infoReservaDto.FechaSalida,
+                LlegadaEstimada = infoReservaDto.LlegadaEstimada,
+                Comentarios = infoReservaDto.Comentarios,
+                EstadoId = infoReservaDto.EstadoId,
+                Creacion = DateTime.UtcNow,
+                Actualizacion = DateTime.UtcNow,
+                Activo = true, // O un valor que venga del DTO si es configurable
+            };
+
+            if (infoReservaDto.Detalles != null)
+            {
+                res.Detalles = infoReservaDto.Detalles.Select(d => new DetalleReserva
+                {
+                    HabitacionId = d.HabitacionId,
+                    TipoHabitacionId = d.TipoHabitacionId,
+                    CantidadAdultos = d.CantidadAdultos,
+                    CantidadNinhos = d.CantidadNinhos,
+                    PensionId = d.PensionId,
+                    Activo = d.Activo,
+                    Creacion = DateTime.Now,
+                    Actualizacion = DateTime.Now
+                }).ToList();
+            }
+
+            _context.Reserva.Add(res);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { Mensaje = "Error al guardar los datos en la base de datos.", Detalle = ex.InnerException?.Message ?? ex.Message });
+            }
+
+            // Preparar una respuesta más útil
+            var respuestaDto = new
+            {
+                mensaje = "Reserva creada exitosamente.",
+                reservaId = res.Id,
+                codigoReserva = res.Codigo,
+                clienteId = clienteParaReserva.Id,
+                clienteNuevo = clienteEsNuevo,
+                emailCliente = clienteParaReserva.Email,
+                fechaIngreso = res.FechaIngreso,
+                fechaSalida = res.FechaSalida
+            };
+
+            return CreatedAtAction("GetReserva", new { id = res.Id }, respuestaDto);
+        }
+
         // CONFIRMAR RESERVA, ASIGNAR HABITACIONES Y MANDAR EMAIL DE CONFIRMACION
         [HttpPut("{id}/confirm")]
         public async Task<IActionResult> ConfirmarReserva(int id, ReservaDTO resDTO)
