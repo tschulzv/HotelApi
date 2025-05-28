@@ -56,7 +56,8 @@ namespace HotelApi.Controllers
             _context.Usuario.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok("Usuario creado con exito");
+            var token = GenerateJwtToken(user.Username);
+            return Ok(new { token, username = user.Username });
         }
 
         [HttpPost("login")]
