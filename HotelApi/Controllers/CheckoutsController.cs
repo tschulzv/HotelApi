@@ -47,6 +47,19 @@ namespace HotelApi.Controllers
             return ToDTO(checkout);
         }
 
+        [HttpGet("verificarReserva/{codigo}")]
+        public async Task<IActionResult> VerificarReserva(string codigo)
+        {
+            Console.WriteLine(codigo);
+            var reserva = await _context.Reserva
+                .Include(r => r.Checkin)
+                .FirstOrDefaultAsync(r => r.Codigo == codigo && r.Activo);
+
+            bool tieneCheckin = reserva != null && reserva.Checkin != null && reserva.Checkin.Activo;
+
+            return Ok(new { success = tieneCheckin });
+        }
+
         // PUT: api/Checkouts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
