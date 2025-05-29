@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HotelApi.Data;
+﻿using HotelApi.Data;
+using HotelApi.DTOs;
+using HotelApi.DTOs.Request;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using HotelApi.DTOs;
-using System.Net.Mail;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
-using HotelApi.DTOs.Request;
+using System.Net.Mail;
+using System.Threading.Tasks;
 
 namespace HotelApi.Controllers
 {
@@ -123,6 +124,167 @@ namespace HotelApi.Controllers
             }
 
             return ToDTO(reserva);
+        }
+
+        // Luego agregamos el endpoint en el controlador de Reservas existente
+        [HttpGet("estadisticas-pensiones")]
+        public async Task<ActionResult<IEnumerable<PensionEstadisticaDTO>>> GetEstadisticasPensiones(
+            [FromQuery] int? anho,
+            [FromQuery] int? mes)
+        {
+            try
+            {
+                var query = _context.DetalleReserva
+                    .Include(d => d.Reserva)
+                    .Include(d => d.Pension)
+                    .Where(d => d.Activo && d.Reserva.Activo);
+
+                // Aplicar filtros de año y mes si se proporcionan
+                if (anho.HasValue)
+                {
+                    query = query.Where(d => d.Reserva.FechaIngreso.Year == anho.Value);
+                }
+
+                if (mes.HasValue)
+                {
+                    query = query.Where(d => d.Reserva.FechaIngreso.Month == mes.Value);
+                }
+
+                var estadisticas = await query
+                    .GroupBy(d => new { d.PensionId, d.Pension.Nombre })
+                    .Select(g => new PensionEstadisticaDTO
+                    {
+                        PensionId = g.Key.PensionId,
+                        NombrePension = g.Key.Nombre,
+                        CantidadTotal = g.Sum(d => d.CantidadAdultos + d.CantidadNinhos),
+                        CantidadAdultos = g.Sum(d => d.CantidadAdultos),
+                        CantidadNinhos = g.Sum(d => d.CantidadNinhos)
+                    })
+                    .ToListAsync();
+
+                return Ok(estadisticas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpGet("estadisticas-ocupacion")]
+        public async Task<IActionResult> GetEstadisticasOcupacion([FromQuery] DateTime fecha)
+        {
+            var query = @"
+        SELECT
+            HabitacionesOcupadas.CantidadOcupadas,
+            TotalHabitaciones.CantidadTotal,
+            CAST(HabitacionesOcupadas.CantidadOcupadas AS DECIMAL(10, 2)) * 100 / TotalHabitaciones.CantidadTotal AS PorcentajeOcupacion
+        FROM
+            (
+                SELECT COUNT(DR.HabitacionId) AS CantidadOcupadas
+                FROM Reserva AS R
+                INNER JOIN DetalleReserva AS DR ON R.Id = DR.ReservaId
+                WHERE R.FechaIngreso <= @Fecha
+                AND R.FechaSalida > @Fecha
+                AND R.Activo = 1
+                AND DR.Activo = 1
+                AND DR.HabitacionId IS NOT NULL
+            ) AS HabitacionesOcupadas,
+            (
+                SELECT COUNT(H.Id) AS CantidadTotal
+                FROM Habitacion AS H
+                WHERE H.Activo = 1
+            ) AS TotalHabitaciones;";
+
+            using (var connection = _context.Database.GetDbConnection())
+            {
+                await connection.OpenAsync();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.Parameters.Add(new SqlParameter("@Fecha", fecha));
+
+                using var result = await command.ExecuteReaderAsync();
+                if (await result.ReadAsync())
+                {
+                    return Ok(new
+                    {
+                        CantidadOcupadas = result.GetInt32(0),
+                        CantidadTotal = result.GetInt32(1),
+                        PorcentajeOcupacion = result.GetDecimal(2)
+                    });
+                }
+                return NotFound();
+            }
+        }
+
+        // En ReservasController.cs
+
+        [HttpGet("checkins-pendientes")]
+        public async Task<IActionResult> GetCheckInsPendientes()
+        {
+            var today = DateTime.Today;
+
+            var checkInsPendientes = await _context.Reserva
+                .Include(r => r.Cliente)
+                .Include(r => r.Detalles)
+                    .ThenInclude(d => d.Habitacion)
+                        .ThenInclude(h => h.TipoHabitacion)
+                .Where(r => r.Activo
+                    && r.EstadoId == 2  // Confirmada
+                    && r.FechaIngreso.Date == today)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Codigo,
+                    r.ClienteId,
+                    NombreCliente = r.Cliente.Nombre + " " + r.Cliente.Apellido,
+                    r.FechaIngreso,
+                    r.LlegadaEstimada,
+                    CantidadHabitaciones = r.Detalles.Count,
+                    Habitaciones = r.Detalles.Select(d => new
+                    {
+                        NumeroHabitacion = d.Habitacion.NumeroHabitacion,
+                        TipoHabitacionId = d.Habitacion.TipoHabitacionId,
+                        TipoHabitacionNombre = d.Habitacion.TipoHabitacion.Nombre
+                    }).ToList()
+                })
+                .OrderBy(r => r.LlegadaEstimada)
+                .ToListAsync();
+
+            return Ok(checkInsPendientes);
+        }
+
+        [HttpGet("checkouts-pendientes")]
+        public async Task<IActionResult> GetCheckOutsPendientes()
+        {
+            var today = DateTime.Today;
+
+            var checkOutsPendientes = await _context.Reserva
+                .Include(r => r.Cliente)
+                .Include(r => r.Detalles)
+                    .ThenInclude(d => d.Habitacion)
+                        .ThenInclude(h => h.TipoHabitacion)
+                .Where(r => r.Activo
+                    && r.EstadoId == 4  // Check-in
+                    && r.FechaSalida.Date == today)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Codigo,
+                    r.ClienteId,
+                    NombreCliente = r.Cliente.Nombre + " " + r.Cliente.Apellido,
+                    r.FechaSalida,
+                    CantidadHabitaciones = r.Detalles.Count,
+                    Habitaciones = r.Detalles.Select(d => new
+                    {
+                        NumeroHabitacion = d.Habitacion.NumeroHabitacion,
+                        TipoHabitacionId = d.Habitacion.TipoHabitacionId,
+                        TipoHabitacionNombre = d.Habitacion.TipoHabitacion.Nombre
+                    }).ToList()
+                })
+                .OrderBy(r => r.FechaSalida)
+                .ToListAsync();
+
+            return Ok(checkOutsPendientes);
         }
 
         // PUT: api/Reservas/5
@@ -617,7 +779,8 @@ namespace HotelApi.Controllers
 
                     var habitaciones = await _context.Habitacion
                     .Include(h => h.TipoHabitacion)
-                    .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId &&
+                    .Where(h => h.Activo && 
+                                h.TipoHabitacionId == detalle.TipoHabitacionId &&
                                 h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
                     .ToListAsync();
 
