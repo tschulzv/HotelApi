@@ -35,6 +35,8 @@ namespace HotelApi.Models
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Actualizacion { get; set; }
 
+        public bool EsContestada { get; set; }
+
         [Required]
         public bool Activo { get; set; } = true;
 

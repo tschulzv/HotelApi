@@ -489,7 +489,7 @@ namespace HotelApi.Controllers
                 else
                     throw;
             }
-            Console.WriteLine("clienteid", res.ClienteId);
+            //Console.WriteLine("clienteid", res.ClienteId);
             var cliente = await _context.Cliente.FindAsync(res.ClienteId);
             if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
             {
