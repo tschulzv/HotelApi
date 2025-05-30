@@ -90,7 +90,7 @@ namespace HotelApi.Controllers
             {
                 foreach (var roomReq in request.HabitacionesSolicitadas)
                 {
-                    Console.WriteLine($"    Adultos: {roomReq.Adultos}, Niños: {roomReq.Ninos}");
+                    Console.WriteLine($"    Adultos: {roomReq.Adultos}, Niños: {roomReq.Ninos}, Tipo: {roomReq.TipoHabitacionId?.ToString() ?? "Cualquiera"}");
                 }
             }
             else
@@ -122,87 +122,76 @@ namespace HotelApi.Controllers
                     h.Activo)
                 .ToListAsync();
 
-            // Validación de capacidad: Modificado para devolver *todas* las habitaciones que cumplen los criterios
+            // Filtrado individual por RoomRequest (tipo + capacidad)
             var habitacionesFiltradas = new List<Habitacion>();
-            Console.WriteLine("Filtrando habitaciones por capacidad:");
+            Console.WriteLine("Filtrando habitaciones por capacidad y tipo:");
+
             foreach (var roomReq in request.HabitacionesSolicitadas)
             {
                 var capacidadRequerida = roomReq.Adultos + roomReq.Ninos;
-                Console.WriteLine($"  Buscando habitaciones para {roomReq.Adultos} adultos y {roomReq.Ninos} niños (capacidad requerida: {capacidadRequerida})");
-                // En lugar de FirstOrDefault, usamos Where para encontrar *todas* las habitaciones que cumplen
-                var habitacionesCumplen = habitacionesDisponibles.Where(h =>
-                    h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida).ToList(); // ToList() para ejecutar la consulta y obtener resultados
+                Console.WriteLine($"  Requiere: {roomReq.Adultos} adultos, {roomReq.Ninos} niños (capacidad {capacidadRequerida}), Tipo ID: {roomReq.TipoHabitacionId?.ToString() ?? "Cualquiera"}");
 
-                if (habitacionesCumplen.Any()) // Verificamos si se encontraron habitaciones que cumplen
+                var habitacionesCumplen = habitacionesDisponibles.Where(h =>
+                    h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida &&
+                    (!roomReq.TipoHabitacionId.HasValue || h.TipoHabitacionId == roomReq.TipoHabitacionId.Value)
+                ).ToList();
+
+                if (habitacionesCumplen.Any())
                 {
-                    habitacionesFiltradas.AddRange(habitacionesCumplen); // Agregamos *todas* las habitaciones encontradas
-                                                                         // No eliminamos de habitacionesDisponibles, ya que podríamos necesitarlas para otras solicitudes en el mismo request
+                    habitacionesFiltradas.AddRange(habitacionesCumplen);
                     foreach (var hab in habitacionesCumplen)
                     {
-                        Console.WriteLine($"    Encontrada habitación: ID: {hab.Id}, Nombre: {hab.NumeroHabitacion}, Tipo: {hab.TipoHabitacion?.Nombre}, Capacidad Máxima: {hab.TipoHabitacion?.MaximaOcupacion}");
+                        Console.WriteLine($"    OK -> ID: {hab.Id}, Número: {hab.NumeroHabitacion}, Tipo: {hab.TipoHabitacion?.Nombre}, Capacidad: {hab.TipoHabitacion?.MaximaOcupacion}");
                     }
-
                 }
                 else
                 {
-                    Console.WriteLine("    No se encontraron habitaciones disponibles con la capacidad requerida.");
+                    Console.WriteLine("    ❌ No se encontraron habitaciones con esos criterios.");
                 }
             }
 
             Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine("Enviando habitaciones disponibles (filtradas por capacidad):");
-            if (habitacionesFiltradas.Any())
+            Console.WriteLine("Resumen final de habitaciones filtradas:");
+            foreach (var h in habitacionesFiltradas)
             {
-                foreach (var habitacion in habitacionesFiltradas)
-                {
-                    Console.WriteLine($"  ID: {habitacion.Id}, Nombre: {habitacion.NumeroHabitacion}, Tipo: {habitacion.TipoHabitacion?.Nombre}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("  No se encontraron habitaciones disponibles que cumplan con los criterios de capacidad.");
+                Console.WriteLine($"  ID: {h.Id}, Tipo: {h.TipoHabitacion?.Nombre}");
             }
             Console.WriteLine("--------------------------------------------------");
 
-            // C#
+            if (request.isRequestRoomData)
+            {
+                var h = habitacionesFiltradas.Select(h => ToDTO(h));
+                return Ok(h);
+            }
+            // Agrupar para construir DTOs
             var resultado = habitacionesFiltradas
-            .GroupBy(h => h.TipoHabitacion)
-            .Select(g => new TipoHabitacionDTO
-            {
-                Id = g.Key.Id,
-                Nombre = g.Key.Nombre,
-                Descripcion = g.Key.Descripcion,
-                PrecioBase = g.Key.PrecioBase,
-                CantidadDisponible = g.Count(),
-                MaximaOcupacion = g.Key.MaximaOcupacion,
-                Tamanho = g.Key.Tamanho,
-                Servicios = g.Key.Servicios?.Select(s => new ServicioDTO
+                .GroupBy(h => h.TipoHabitacion)
+                .Select(g => new TipoHabitacionDTO
                 {
-                    Id = s.Id,
-                    Nombre = s.Nombre,
-                    IconName = s.IconName
-                }).ToList() ?? new List<ServicioDTO>(),
-                Imagenes = g.Key.ImagenesHabitaciones?.Select(i => new ImagenHabitacionDTO
-                {
-                    Id = i.Id,
-                    Url = $"{baseUrl}/imagenes/{i.Url}"
-                }).ToList() ?? new List<ImagenHabitacionDTO>()
-            })
-            .ToList();
+                    Id = g.Key.Id,
+                    Nombre = g.Key.Nombre,
+                    Descripcion = g.Key.Descripcion,
+                    PrecioBase = g.Key.PrecioBase,
+                    CantidadDisponible = g.Count(),
+                    MaximaOcupacion = g.Key.MaximaOcupacion,
+                    Tamanho = g.Key.Tamanho,
+                    Servicios = g.Key.Servicios?.Select(s => new ServicioDTO
+                    {
+                        Id = s.Id,
+                        Nombre = s.Nombre,
+                        IconName = s.IconName
+                    }).ToList() ?? new List<ServicioDTO>(),
+                    Imagenes = g.Key.ImagenesHabitaciones?.Select(i => new ImagenHabitacionDTO
+                    {
+                        Id = i.Id,
+                        Url = $"{baseUrl}/imagenes/{i.Url}"
+                    }).ToList() ?? new List<ImagenHabitacionDTO>()
+                })
+                .ToList();
 
-            if (request.TipoHabitacionId.HasValue)
-            {
-                Console.WriteLine($"Filtrando habitaciones por TipoHabitacionId: {request.TipoHabitacionId.Value}");
-                habitacionesFiltradas = habitacionesFiltradas
-                    .Where(h => h.TipoHabitacionId == request.TipoHabitacionId.Value)
-                    .ToList();
-            }else
-            {
-                Console.WriteLine("No se especificó TipoHabitacionId, se devolverán todas las habitaciones disponibles.");
-            }
-            
             return Ok(resultado);
         }
+
 
 
         // PUT: api/Habitacions/5
