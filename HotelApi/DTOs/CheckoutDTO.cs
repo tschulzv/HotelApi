@@ -6,6 +6,8 @@
 
         public int ReservaId { get; set; }
 
+        public string Codigo { get; set; }
+
         public bool Activo { get; set; }
     }
 }
