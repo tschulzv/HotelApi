@@ -845,6 +845,7 @@ namespace HotelApi.Controllers
                 LlegadaEstimada = re.LlegadaEstimada,
                 Comentarios = re.Comentarios,
                 EstadoId = re.EstadoId,
+                Creacion = re.Creacion,
                 Detalles = re.Detalles?.Select(d => new DetalleReservaDTO
                 {
                     Id = d.Id,
