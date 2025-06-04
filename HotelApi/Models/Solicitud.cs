@@ -34,6 +34,8 @@ namespace HotelApi.Models
         [Required]
         public bool Activo { get; set; } = true;
 
+        public string? Motivo { get; set; } // Motivo solo para solicitudes de cancelacion
+
 
     }
 }

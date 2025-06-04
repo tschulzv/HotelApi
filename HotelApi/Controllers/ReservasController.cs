@@ -72,7 +72,7 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigo(string codigo)
         {
             var res = await _context.Reserva
-            .Where(r => r.Codigo == codigo && r.EstadoId == 1)
+            .Where(r => r.Codigo == codigo)
             .Include(r => r.Detalles)
             .ToListAsync();
 
@@ -915,7 +915,7 @@ namespace HotelApi.Controllers
                         {detallesHtml}
                     </tbody>
                 </table>
-                <p>Si desea cancelar su reserva, puede acceder a ella usando <a href=""https://tusitio.com/reservas/cancelar/{reserva.Codigo}"">este enlace</a>.</p>
+                <p>Si desea cancelar su reserva, puede acceder a ella usando <a href=""http://localhost:5173/reservas/{reserva.Id}"">este enlace</a>.</p>
                 <p style='margin-top: 20px;'>Nos encantará recibirle pronto. Si tiene alguna duda o desea modificar su reserva, no dude en contactarnos.</p>
 
                 <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>

@@ -178,7 +178,8 @@ namespace HotelApi.Controllers
                 Tipo = solDTO.Tipo,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
-                Activo = true
+                Activo = true,
+                Motivo = solDTO.Motivo
             };
             _context.Solicitud.Add(solicitud);
             await _context.SaveChangesAsync();
