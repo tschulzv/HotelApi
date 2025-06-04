@@ -128,27 +128,23 @@ namespace HotelApi.Controllers
 
         // Luego agregamos el endpoint en el controlador de Reservas existente
         [HttpGet("estadisticas-pensiones")]
-        public async Task<ActionResult<IEnumerable<PensionEstadisticaDTO>>> GetEstadisticasPensiones(
-            [FromQuery] int? anho,
-            [FromQuery] int? mes)
+        public async Task<ActionResult<IEnumerable<PensionEstadisticaDTO>>> GetEstadisticasPensiones([FromQuery] DateTime? fecha)
         {
             try
             {
+                var hoy = fecha?.Date ?? DateTime.Today;
+
                 var query = _context.DetalleReserva
                     .Include(d => d.Reserva)
                     .Include(d => d.Pension)
-                    .Where(d => d.Activo && d.Reserva.Activo);
-
-                // Aplicar filtros de año y mes si se proporcionan
-                if (anho.HasValue)
-                {
-                    query = query.Where(d => d.Reserva.FechaIngreso.Year == anho.Value);
-                }
-
-                if (mes.HasValue)
-                {
-                    query = query.Where(d => d.Reserva.FechaIngreso.Month == mes.Value);
-                }
+                    .Where(d =>
+                        d.Activo &&
+                        d.Reserva.Activo &&
+                        d.Pension != null &&
+                        d.Reserva.FechaIngreso.Date <= hoy &&
+                        d.Reserva.FechaSalida.Date > hoy && // aún no salió
+                        d.Reserva.EstadoId != 3 // no cancelada
+                    );
 
                 var estadisticas = await query
                     .GroupBy(d => new { d.PensionId, d.Pension.Nombre })
@@ -170,30 +166,33 @@ namespace HotelApi.Controllers
             }
         }
 
+
         [HttpGet("estadisticas-ocupacion")]
         public async Task<IActionResult> GetEstadisticasOcupacion([FromQuery] DateTime fecha)
         {
             var query = @"
-        SELECT
-            HabitacionesOcupadas.CantidadOcupadas,
-            TotalHabitaciones.CantidadTotal,
-            CAST(HabitacionesOcupadas.CantidadOcupadas AS DECIMAL(10, 2)) * 100 / TotalHabitaciones.CantidadTotal AS PorcentajeOcupacion
-        FROM
-            (
-                SELECT COUNT(DR.HabitacionId) AS CantidadOcupadas
+                    WITH HabitacionesOcupadas AS (
+                SELECT COUNT(DISTINCT DR.HabitacionId) AS CantidadOcupadas
                 FROM Reserva AS R
                 INNER JOIN DetalleReserva AS DR ON R.Id = DR.ReservaId
                 WHERE R.FechaIngreso <= @Fecha
-                AND R.FechaSalida > @Fecha
-                AND R.Activo = 1
-                AND DR.Activo = 1
-                AND DR.HabitacionId IS NOT NULL
-            ) AS HabitacionesOcupadas,
-            (
+                  AND R.FechaSalida >= @Fecha
+                  AND R.Activo = 1
+                  AND DR.Activo = 1
+                  AND DR.HabitacionId IS NOT NULL
+                  AND R.EstadoId != 3
+            ),
+            TotalHabitaciones AS (
                 SELECT COUNT(H.Id) AS CantidadTotal
                 FROM Habitacion AS H
                 WHERE H.Activo = 1
-            ) AS TotalHabitaciones;";
+            )
+            SELECT 
+                ho.CantidadOcupadas,
+                th.CantidadTotal,
+                CAST(ho.CantidadOcupadas AS DECIMAL(10,2)) * 100 / th.CantidadTotal AS PorcentajeOcupacion
+            FROM HabitacionesOcupadas ho, TotalHabitaciones th;
+            ";
 
             using (var connection = _context.Database.GetDbConnection())
             {
