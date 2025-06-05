@@ -27,36 +27,39 @@ namespace HotelApi.Controllers
             _context = context;
         }
 
+        //CAMBIE ESTO PARA QUE TRAIGA SOLO RESERVAS ACTIVAS
         // GET: api/Reservas
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservas()
         {
-            // obtener solo los activos
             var res = await _context.Reserva
-            .Where(r => r.Activo)
-            .Include(r => r.Detalles)
-                .ThenInclude(d => d.Habitacion)
-            .Include(r => r.Detalles)
-                .ThenInclude(d => d.TipoHabitacion)
-            .Include(r => r.Cliente)
-            .ToListAsync();
+                .Where(r => r.Activo)
+                // Se filtran solo los detalles activos
+                .Include(r => r.Detalles.Where(d => d.Activo))
+                    .ThenInclude(d => d.Habitacion)
+                .Include(r => r.Detalles.Where(d => d.Activo))
+                    .ThenInclude(d => d.TipoHabitacion)
+                .Include(r => r.Cliente)
+                .ToListAsync();
 
             var resDtos = res.Select(r => ToDTO(r));
             return Ok(resDtos);
         }
 
+        //CAMBIE ESTO PARA QUE TRAIGA SOLO RESERVAS ACTIVAS
         // GET: api/Reservas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ReservaDTO>> GetReserva(int id)
         {
             var reserva = await _context.Reserva
-            .Include(r => r.Detalles)
-                .ThenInclude (d => d.Habitacion)
-             .Include(r => r.Detalles)
-                .ThenInclude(d => d.TipoHabitacion)
-            .Include(r => r.Cliente)
-            .Where(r => r.Activo && r.Id == id)
-            .FirstOrDefaultAsync();
+                .Where(r => r.Activo && r.Id == id)
+                // Filtramos también los detalles activos
+                .Include(r => r.Detalles.Where(d => d.Activo))
+                    .ThenInclude(d => d.Habitacion)
+                .Include(r => r.Detalles.Where(d => d.Activo))
+                    .ThenInclude(d => d.TipoHabitacion)
+                .Include(r => r.Cliente)
+                .FirstOrDefaultAsync();
 
             if (reserva == null)
             {
@@ -65,6 +68,7 @@ namespace HotelApi.Controllers
 
             return ToDTO(reserva);
         }
+
 
         //obtener reserva con determinado codigo
         // GET: api/Reservas/code/RES001
