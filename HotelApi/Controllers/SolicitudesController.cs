@@ -238,7 +238,8 @@ namespace HotelApi.Controllers
                 Consulta = sol.ConsultaId != null ? ConsultasController.ToDTO(sol.Consulta) : null,
                 EsLeida = sol.EsLeida,
                 Tipo = sol.Tipo,
-                Creacion = sol.Creacion
+                Creacion = sol.Creacion,
+                Motivo = sol.Motivo
             };
         }
 
