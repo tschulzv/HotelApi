@@ -9,7 +9,6 @@ namespace HotelApi.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public int? DetalleReservaId { get; set; }
         public DetalleReserva? DetalleReserva { get; set; }
 
         public int? ReservaId { get; set; }
@@ -32,5 +31,6 @@ namespace HotelApi.Models
 
         [Required]
         public bool Activo { get; set; } = true;
+        public List<int> DetalleReservaIds { get; set; } = new List<int>();// para multiples ids de detalles
     }
 }

@@ -64,7 +64,6 @@ namespace HotelApi.Controllers
                 return NotFound();
             }
             ca.Id = caDto.Id;
-            ca.DetalleReservaId = caDto.DetalleReservaId;
             ca.Motivo = caDto.Motivo;
             ca.Activo = caDto.Activo;
             ca.Actualizacion = DateTime.Now;
@@ -98,44 +97,59 @@ namespace HotelApi.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (caDto.ReservaId == null)
+                return BadRequest("Debe proporcionar un ReservaId.");
+
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // Crear la cancelación
+                var reserva = await _context.Reserva
+                    .Include(r => r.Detalles)
+                    .FirstOrDefaultAsync(r => r.Id == caDto.ReservaId);
+
+                if (reserva == null)
+                    return NotFound($"No se encontró Reserva con ID {caDto.ReservaId}");
+
                 var cancelacion = new Cancelacion
                 {
-                    DetalleReservaId = caDto.DetalleReservaId,
-                    ReservaId = caDto.ReservaId,
+                    ReservaId = caDto.ReservaId.Value,
                     Motivo = caDto.Motivo,
                     Creacion = DateTime.Now,
                     Actualizacion = DateTime.Now,
-                    Activo = true
+                    Activo = true,
+                    DetalleReservaIds = new List<int>()
                 };
 
-                _context.Cancelacion.Add(cancelacion);
-
-                // si el detalle no es null, se desea cancelar solo un detalle
-                if (caDto.DetalleReservaId != null)
+                if (caDto.DetalleReservaIds != null && caDto.DetalleReservaIds.Any())
                 {
-                    // Inactivar el detalle de reserva
-                    var detalle = await _context.DetalleReserva.FindAsync(caDto.DetalleReservaId);
-                    if (detalle == null)
-                        return NotFound($"No se encontró el DetalleReserva con ID {caDto.DetalleReservaId}");
+                    foreach (var detalleId in caDto.DetalleReservaIds)
+                    {
+                        var detalle = await _context.DetalleReserva.FindAsync(detalleId);
 
-                    detalle.Activo = false;
-                    detalle.Actualizacion = DateTime.Now;
-                } else if (caDto.ReservaId != null)
+                        if (detalle == null)
+                            return NotFound($"No se encontró DetalleReserva con ID {detalleId}");
+
+                        if (detalle.ReservaId != caDto.ReservaId)
+                            return BadRequest($"El DetalleReserva ID {detalleId} no pertenece a la reserva ID {caDto.ReservaId}");
+
+                        if (!detalle.Activo)
+                            return BadRequest($"El DetalleReserva ID {detalleId} ya está cancelado.");
+
+                        detalle.Activo = false;
+                        detalle.Actualizacion = DateTime.Now;
+
+                        cancelacion.DetalleReservaIds.Add(detalleId);
+                    }
+                }
+                else
                 {
-                    // cambiar el estado de la reserva a cancelada
-                    var res = await _context.Reserva.FindAsync(caDto.ReservaId);
-                    if (res == null)
-                        return NotFound($"No se encontró Reserva con ID {caDto.ReservaId}");
-
-                    res.EstadoId = 3;
-                    res.Actualizacion = DateTime.Now;
+                    // Cancelación total de la reserva
+                    reserva.EstadoId = 3; // Asumimos que EstadoId 3 = Cancelada
+                    reserva.Actualizacion = DateTime.Now;
                 }
 
+                _context.Cancelacion.Add(cancelacion);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -147,6 +161,8 @@ namespace HotelApi.Controllers
                 return StatusCode(500, $"Error al cancelar: {ex.Message}");
             }
         }
+
+
 
         // DELETE: api/Cancelacions/5
         [HttpDelete("{id}")]
@@ -194,9 +210,9 @@ namespace HotelApi.Controllers
                 Id = ca.Id,
                 ReservaId = ca.ReservaId,
                 Reserva = ca.ReservaId != null ? ReservasController.ToDTO(ca.Reserva) : null,
-                DetalleReservaId = ca.DetalleReservaId,
                 Motivo = ca.Motivo,
-                Activo = ca.Activo
+                Activo = ca.Activo,
+                DetalleReservaIds = ca.DetalleReservaIds
             };
         }
     }

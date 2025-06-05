@@ -179,7 +179,8 @@ namespace HotelApi.Controllers
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
                 Activo = true,
-                Motivo = solDTO.Motivo
+                Motivo = solDTO.Motivo,
+                DetalleReservaIds = solDTO.DetalleReservaIds
             };
             _context.Solicitud.Add(solicitud);
             await _context.SaveChangesAsync();
@@ -239,7 +240,8 @@ namespace HotelApi.Controllers
                 EsLeida = sol.EsLeida,
                 Tipo = sol.Tipo,
                 Creacion = sol.Creacion,
-                Motivo = sol.Motivo
+                Motivo = sol.Motivo,
+                DetalleReservaIds = sol.DetalleReservaIds
             };
         }
 

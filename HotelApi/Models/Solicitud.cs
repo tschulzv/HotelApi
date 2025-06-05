@@ -35,7 +35,7 @@ namespace HotelApi.Models
         public bool Activo { get; set; } = true;
 
         public string? Motivo { get; set; } // Motivo solo para solicitudes de cancelacion
-
+        public List<int>? DetalleReservaIds { get; set; } // Lista de ids de los detalles de reserva para cancelar varias habitaciones
 
     }
 }

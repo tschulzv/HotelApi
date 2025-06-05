@@ -29,6 +29,7 @@ namespace HotelApi.DTOs
         public DateTime Creacion { get; set; } // dejamos la fecha de creacion porque nos servira para ordenar las solicitudes por fecha de llegada
 
         public string? Motivo { get; set; } // El motivo es solo para la solictud de cancelacion
+        public List<int>? DetalleReservaIds { get; set; } // Lista de ids de los detalles de reserva para cancelar varias habitaciones
 
     }
 }

@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
 
-        public int? DetalleReservaId { get; set; }
+        public List<int>? DetalleReservaIds { get; set; }
 
         public int? ReservaId { get; set; }
 
