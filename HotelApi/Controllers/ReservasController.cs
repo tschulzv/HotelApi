@@ -67,7 +67,7 @@ namespace HotelApi.Controllers
 
         //obtener reserva con determinado codigo
         // GET: api/Reservas/code/RES001
-        [HttpGet("/code/{codigo}")]
+        [HttpGet("code/{codigo}")]
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigo(string codigo)
         {
             var res = await _context.Reserva
@@ -83,6 +83,26 @@ namespace HotelApi.Controllers
             var resDtos = res.Select(r => ToDTO(r));
             return Ok(resDtos);
         }
+
+        //obtener reserva con determinado codigo con estado checkin
+        // GET: api/Reservas/code/RES001
+        [HttpGet("codeCheckIn/{codigo}")]
+        public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigoCheckIn(string codigo)
+        {
+            var res = await _context.Reserva
+            .Where(r => r.Codigo == codigo && r.EstadoId == 4)
+            .Include(r => r.Detalles)
+            .ToListAsync();
+
+            if (res == null)
+            {
+                return NotFound();
+            }
+
+            var resDtos = res.Select(r => ToDTO(r));
+            return Ok(resDtos);
+        }
+
 
         //obtener reservas de un cliente con determinado id
         // GET: api/Reservas/cliente/5
@@ -123,6 +143,98 @@ namespace HotelApi.Controllers
             }
 
             return ToDTO(reserva);
+        }
+
+        // GET: api/Reservas/{idReserva}/checkoutdata
+        [HttpGet("{codigoReserva}/checkoutdata")]
+        public async Task<ActionResult<CheckoutResponseDTO>> GetCheckoutData(string codigoReserva)
+        {
+            var reserva = await _context.Reserva
+                .Include(r => r.Cliente)
+                .Include(r => r.Detalles)
+                    .ThenInclude(dr => dr.TipoHabitacion) // Necesario para PrecioBase
+                .Include(r => r.Detalles)
+                    .ThenInclude(dr => dr.Pension)        // Necesario para PrecioAdicional de la pensión
+                .Include(r => r.Detalles)
+                    .ThenInclude(dr => dr.Habitacion)     // Para obtener el Número de Habitación si está asignada
+                .Where(r => r.Codigo == codigoReserva && r.Activo) // Considera si solo reservas Activas pueden hacer checkout
+                .FirstOrDefaultAsync();
+
+            if (reserva == null)
+            {
+                return NotFound(new { Mensaje = $"Reserva con codigo {codigoReserva} no encontrada o no está activa." });
+            }
+
+            // Calcular número de noches
+            int nochesEstadia = (int)Math.Max(1, Math.Ceiling((reserva.FechaSalida.Date - reserva.FechaIngreso.Date).TotalDays));
+
+            var checkoutResponseDto = new CheckoutResponseDTO
+            {
+                ReservaId = reserva.Id,
+                CodigoReserva = reserva.Codigo,
+                FechaIngreso = reserva.FechaIngreso,
+                FechaSalida = reserva.FechaSalida,
+                NochesEstadia = nochesEstadia,
+                DetallesCostoHabitaciones = new List<DetalleCostoHabitacionDTO>(),
+            };
+
+            decimal subtotalHabitacionesGeneral = 0m;
+            decimal totalAdicionalesPensionGeneral = 0m;
+
+            if (reserva.Detalles != null)
+            {
+                foreach (var detalle in reserva.Detalles.Where(d => d.Activo)) // Solo detalles activos
+                {
+                    if (detalle.TipoHabitacion == null)
+                    {
+                        Console.WriteLine($"Advertencia: DetalleReserva ID {detalle.Id} no tiene un TipoHabitacion asociado.");
+                        continue;
+                    }
+
+                    decimal precioBaseHabitacionPorNoche = detalle.TipoHabitacion.PrecioBase;
+                    decimal costoPensionPorDia = 0m;
+                    string pensionNombre = "Sin Pensión";
+                    int totalPersonasDetalle = detalle.CantidadAdultos + detalle.CantidadNinhos;
+
+                    if (detalle.Pension != null)
+                    {
+                        costoPensionPorDia = detalle.Pension.PrecioAdicional;
+                        pensionNombre = detalle.Pension.Nombre;
+                    }
+
+                    decimal subtotalCostoHabitacionParaDetalle = precioBaseHabitacionPorNoche * nochesEstadia;
+                    decimal subtotalCostoPensionParaDetalle = costoPensionPorDia * nochesEstadia;
+
+
+                    checkoutResponseDto.DetallesCostoHabitaciones.Add(new DetalleCostoHabitacionDTO
+                    {
+                        DetalleReservaId = detalle.Id,
+                        TipoHabitacionNombre = detalle.TipoHabitacion.Nombre,
+                        NumeroHabitacionAsignada = detalle.Habitacion?.NumeroHabitacion ?? 0,
+                        PensionNombre = pensionNombre,
+                        SubtotalCostoHabitacion = subtotalCostoHabitacionParaDetalle,
+                        SubtotalCostoPension = subtotalCostoPensionParaDetalle,
+                        TotalDetalle = subtotalCostoHabitacionParaDetalle + subtotalCostoPensionParaDetalle
+                    });
+
+                    subtotalHabitacionesGeneral += subtotalCostoHabitacionParaDetalle;
+                    totalAdicionalesPensionGeneral += subtotalCostoPensionParaDetalle;
+                }
+            }
+
+            checkoutResponseDto.SubtotalHabitaciones = subtotalHabitacionesGeneral;
+            checkoutResponseDto.TotalAdicionalesPension = totalAdicionalesPensionGeneral;
+
+            // Calcular impuestos y total
+            const decimal TASA_IMPUESTO = 0.10m; // Ejemplo 10%
+
+            decimal baseParaImpuesto = checkoutResponseDto.SubtotalHabitaciones +
+                                       checkoutResponseDto.TotalAdicionalesPension;
+
+            checkoutResponseDto.Impuestos = Math.Round(baseParaImpuesto * TASA_IMPUESTO, 2);
+            checkoutResponseDto.MontoTotalAPagar = Math.Round(baseParaImpuesto + checkoutResponseDto.Impuestos, 2);
+
+            return Ok(checkoutResponseDto);
         }
 
         // PUT: api/Reservas/5
