@@ -137,7 +137,7 @@ namespace HotelApi.Controllers
                     if (detalleReserva.Habitacion != null)
                     {
                         detalleReserva.Habitacion.EstadoHabitacionId = ID_ESTADO_HABITACION_DISPONIBLE;
-                        detalleReserva.Habitacion.Actualizacion = DateTime.UtcNow;
+                        detalleReserva.Habitacion.Actualizacion = DateTime.Now;
                         _context.Entry(detalleReserva.Habitacion).State = EntityState.Modified;
                     }
                     else
@@ -151,7 +151,7 @@ namespace HotelApi.Controllers
                 Console.WriteLine($"Advertencia: La reserva código {reserva.Codigo} (en Check-In) no tiene detalles de habitación para actualizar a disponible.");
             }
             reserva.EstadoId = ID_ESTADO_RESERVA_CHECKOUT;
-            reserva.Actualizacion = DateTime.UtcNow;
+            reserva.Actualizacion = DateTime.Now;
             _context.Entry(reserva).State = EntityState.Modified;
 
 
@@ -160,8 +160,8 @@ namespace HotelApi.Controllers
             {
                 ReservaId = reserva.Id,
                 Activo = true,
-                Creacion = DateTime.UtcNow,
-                Actualizacion = DateTime.UtcNow
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now
             };
 
             _context.Checkout.Add(checkout);

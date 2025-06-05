@@ -50,7 +50,7 @@ namespace HotelApi.Controllers
         [HttpGet("document/{tipoDocumentoId}/{numDocumento}")]
         public async Task<ActionResult<ClienteDTO>> GetClienteDocumento(int tipoDocumentoId, string numDocumento)
         {
-            var cliente = await _context.Cliente.Where(c => c.TipoDocumentoId == tipoDocumentoId && c.NumDocumento == numDocumento).Include(c => c.TipoDocumento).FirstOrDefaultAsync();
+            var cliente = await _context.Cliente.Where(c => c.Activo && c.TipoDocumentoId == tipoDocumentoId && c.NumDocumento == numDocumento).Include(c => c.TipoDocumento).FirstOrDefaultAsync();
 
             if (cliente == null)
             {

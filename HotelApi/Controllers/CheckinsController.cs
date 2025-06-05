@@ -169,7 +169,7 @@ namespace HotelApi.Controllers
 
             // 2. Actualizar el Estado de la Reserva
             reserva.EstadoId = ID_ESTADO_RESERVA_CHECKIN;
-            reserva.Actualizacion = DateTime.UtcNow;
+            reserva.Actualizacion = DateTime.Now;
             _context.Entry(reserva).State = EntityState.Modified;
 
             // 3. Actualizar el Estado de cada Habitación asociada a la Reserva
@@ -185,7 +185,7 @@ namespace HotelApi.Controllers
                             Console.WriteLine($"Advertencia: La habitación ID {detalleReserva.Habitacion.Id} ya estaba marcada como ocupada (Estado ID: {ID_ESTADO_HABITACION_OCUPADO}).");
                         }
                         detalleReserva.Habitacion.EstadoHabitacionId = ID_ESTADO_HABITACION_OCUPADO; // Usa el ID correcto
-                        detalleReserva.Habitacion.Actualizacion = DateTime.UtcNow;
+                        detalleReserva.Habitacion.Actualizacion = DateTime.Now;
                         _context.Entry(detalleReserva.Habitacion).State = EntityState.Modified;
                     }
                     else
@@ -212,8 +212,8 @@ namespace HotelApi.Controllers
                         Activo = true,
                     }).ToList() ?? new List<DetalleHuesped>()
                 ),
-                Creacion = DateTime.UtcNow,
-                Actualizacion = DateTime.UtcNow
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now
             };
 
             _context.Checkin.Add(checkin);

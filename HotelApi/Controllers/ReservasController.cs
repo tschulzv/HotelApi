@@ -561,7 +561,7 @@ namespace HotelApi.Controllers
                     Nacionalidad = infoClienteDto.Nacionalidad,
                     Comentarios = infoClienteDto.Comentarios,
                     Activo = true,
-                    Creacion = DateTime.UtcNow
+                    Creacion = DateTime.Now
                 };
                 _context.Cliente.Add(clienteParaReserva);
                 clienteEsNuevo = true;
@@ -577,9 +577,9 @@ namespace HotelApi.Controllers
                 LlegadaEstimada = infoReservaDto.LlegadaEstimada,
                 Comentarios = infoReservaDto.Comentarios,
                 EstadoId = infoReservaDto.EstadoId,
-                Creacion = DateTime.UtcNow,
-                Actualizacion = DateTime.UtcNow,
-                Activo = true, // O un valor que venga del DTO si es configurable
+                Creacion = DateTime.Now,
+                Actualizacion = DateTime.Now,
+                Activo = true
             };
 
             if (infoReservaDto.Detalles != null)
@@ -606,7 +606,7 @@ namespace HotelApi.Controllers
                 ConsultaId = null,     
                 Tipo = infoSolicitudDto.Tipo ?? "Reserva", 
                 EsLeida = false,
-                Creacion = DateTime.UtcNow
+                Creacion = DateTime.Now
             };
 
             _context.Solicitud.Add(nuevaSolicitud);
