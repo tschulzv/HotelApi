@@ -160,8 +160,12 @@ namespace HotelApi.Controllers
             {
                 return BadRequest(new { Mensaje = "No se puede hacer Check-In a una reserva que ya está en Check-Out o Cancelada." });
             }
-            // (Otras validaciones de estado de reserva si son necesarias)
+            var hoy = DateTime.Now.Date;
 
+            if (reserva.FechaIngreso.Date != hoy)
+            {
+                return BadRequest(new { Mensaje = "Solo se puede hacer Check-In el mismo día de la fecha programada." });
+            }
 
             // 2. Actualizar el Estado de la Reserva
             reserva.EstadoId = ID_ESTADO_RESERVA_CHECKIN;

@@ -12,6 +12,8 @@
 
         public string Mensaje { get; set; }
 
+        public bool EsContestada { get; set; }
+
         public bool Activo { get; set; }
     }
 }

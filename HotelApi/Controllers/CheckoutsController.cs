@@ -47,6 +47,19 @@ namespace HotelApi.Controllers
             return ToDTO(checkout);
         }
 
+        [HttpGet("verificarReserva/{codigo}")]
+        public async Task<IActionResult> VerificarReserva(string codigo)
+        {
+            Console.WriteLine(codigo);
+            var reserva = await _context.Reserva
+                .Include(r => r.Checkin)
+                .FirstOrDefaultAsync(r => r.Codigo == codigo && r.Activo);
+
+            bool tieneCheckin = reserva != null && reserva.Checkin != null && reserva.Checkin.Activo;
+
+            return Ok(new { success = tieneCheckin });
+        }
+
         // PUT: api/Checkouts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -105,16 +118,16 @@ namespace HotelApi.Controllers
             var reserva = await _context.Reserva
                 .Include(r => r.Detalles)
                     .ThenInclude(dr => dr.Habitacion)
-                .FirstOrDefaultAsync(r => r.Id == checkoutDTO.ReservaId && r.Activo);
+                .FirstOrDefaultAsync(r => r.Codigo == checkoutDTO.Codigo && r.Activo);
 
             if (reserva == null)
             {
-                return NotFound(new { Mensaje = $"Reserva con ID {checkoutDTO.ReservaId} no encontrada o no está activa." });
+                return NotFound(new { Mensaje = $"Reserva con código {checkoutDTO.Codigo} no encontrada o no está activa." });
             }
 
             if (reserva.EstadoId != ID_ESTADO_RESERVA_CHECKIN)
             {
-                return BadRequest(new { Mensaje = $"No se puede hacer Check-Out. La reserva (ID: {reserva.Id}) no está en estado Check-In (actualmente está en estado ID: {reserva.EstadoId})." });
+                return BadRequest(new { Mensaje = $"No se puede hacer Check-Out. La reserva (código: {reserva.Codigo}) no está en estado Check-In (actualmente está en estado ID: {reserva.EstadoId})." });
             }
 
             if (reserva.Detalles != null && reserva.Detalles.Any())
@@ -135,7 +148,7 @@ namespace HotelApi.Controllers
             }
             else
             {
-                Console.WriteLine($"Advertencia: La reserva ID {reserva.Id} (en Check-In) no tiene detalles de habitación para actualizar a disponible.");
+                Console.WriteLine($"Advertencia: La reserva código {reserva.Codigo} (en Check-In) no tiene detalles de habitación para actualizar a disponible.");
             }
             reserva.EstadoId = ID_ESTADO_RESERVA_CHECKOUT;
             reserva.Actualizacion = DateTime.UtcNow;
@@ -145,7 +158,7 @@ namespace HotelApi.Controllers
            
             var checkout = new Checkout 
             {
-                ReservaId = checkoutDTO.ReservaId,
+                ReservaId = reserva.Id,
                 Activo = true,
                 Creacion = DateTime.UtcNow,
                 Actualizacion = DateTime.UtcNow

@@ -22,6 +22,8 @@ namespace HotelApi.DTOs
 
         public int EstadoId { get; set; }
 
+        public DateTime Creacion { get; set; }
+
         public ICollection<DetalleReservaDTO>? Detalles { get; set; }
 
 

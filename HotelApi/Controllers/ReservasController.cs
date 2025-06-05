@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HotelApi.Data;
+﻿using HotelApi.Data;
+using HotelApi.DTOs;
+using HotelApi.DTOs.Request;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using HotelApi.DTOs;
-using System.Net.Mail;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
-using HotelApi.DTOs.Request;
+using System.Net.Mail;
+using System.Threading.Tasks;
 
 namespace HotelApi.Controllers
 {
@@ -71,7 +72,7 @@ namespace HotelApi.Controllers
         public async Task<ActionResult<IEnumerable<ReservaDTO>>> GetReservaPorCodigo(string codigo)
         {
             var res = await _context.Reserva
-            .Where(r => r.Codigo == codigo && r.EstadoId == 1)
+            .Where(r => r.Codigo == codigo)
             .Include(r => r.Detalles)
             .ToListAsync();
 
@@ -143,6 +144,166 @@ namespace HotelApi.Controllers
             }
 
             return ToDTO(reserva);
+        }
+
+        // Luego agregamos el endpoint en el controlador de Reservas existente
+        [HttpGet("estadisticas-pensiones")]
+        public async Task<ActionResult<IEnumerable<PensionEstadisticaDTO>>> GetEstadisticasPensiones([FromQuery] DateTime? fecha)
+        {
+            try
+            {
+                var hoy = fecha?.Date ?? DateTime.Today;
+
+                var query = _context.DetalleReserva
+                    .Include(d => d.Reserva)
+                    .Include(d => d.Pension)
+                    .Where(d =>
+                        d.Activo &&
+                        d.Reserva.Activo &&
+                        d.Pension != null &&
+                        d.Reserva.FechaIngreso.Date <= hoy &&
+                        d.Reserva.FechaSalida.Date > hoy && // aún no salió
+                        d.Reserva.EstadoId != 3 // no cancelada
+                    );
+
+                var estadisticas = await query
+                    .GroupBy(d => new { d.PensionId, d.Pension.Nombre })
+                    .Select(g => new PensionEstadisticaDTO
+                    {
+                        PensionId = g.Key.PensionId,
+                        NombrePension = g.Key.Nombre,
+                        CantidadTotal = g.Sum(d => d.CantidadAdultos + d.CantidadNinhos),
+                        CantidadAdultos = g.Sum(d => d.CantidadAdultos),
+                        CantidadNinhos = g.Sum(d => d.CantidadNinhos)
+                    })
+                    .ToListAsync();
+
+                return Ok(estadisticas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("estadisticas-ocupacion")]
+        public async Task<IActionResult> GetEstadisticasOcupacion([FromQuery] DateTime fecha)
+        {
+            var query = @"
+                    WITH HabitacionesOcupadas AS (
+                SELECT COUNT(DISTINCT DR.HabitacionId) AS CantidadOcupadas
+                FROM Reserva AS R
+                INNER JOIN DetalleReserva AS DR ON R.Id = DR.ReservaId
+                WHERE R.FechaIngreso <= @Fecha
+                  AND R.FechaSalida >= @Fecha
+                  AND R.Activo = 1
+                  AND DR.Activo = 1
+                  AND DR.HabitacionId IS NOT NULL
+                  AND R.EstadoId != 3
+            ),
+            TotalHabitaciones AS (
+                SELECT COUNT(H.Id) AS CantidadTotal
+                FROM Habitacion AS H
+                WHERE H.Activo = 1
+            )
+            SELECT 
+                ho.CantidadOcupadas,
+                th.CantidadTotal,
+                CAST(ho.CantidadOcupadas AS DECIMAL(10,2)) * 100 / th.CantidadTotal AS PorcentajeOcupacion
+            FROM HabitacionesOcupadas ho, TotalHabitaciones th;
+            ";
+
+            using (var connection = _context.Database.GetDbConnection())
+            {
+                await connection.OpenAsync();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.Parameters.Add(new SqlParameter("@Fecha", fecha));
+
+                using var result = await command.ExecuteReaderAsync();
+                if (await result.ReadAsync())
+                {
+                    return Ok(new
+                    {
+                        CantidadOcupadas = result.GetInt32(0),
+                        CantidadTotal = result.GetInt32(1),
+                        PorcentajeOcupacion = result.GetDecimal(2)
+                    });
+                }
+                return NotFound();
+            }
+        }
+
+        // En ReservasController.cs
+
+        [HttpGet("checkins-pendientes")]
+        public async Task<IActionResult> GetCheckInsPendientes()
+        {
+            var today = DateTime.Today;
+
+            var checkInsPendientes = await _context.Reserva
+                .Include(r => r.Cliente)
+                .Include(r => r.Detalles)
+                    .ThenInclude(d => d.Habitacion)
+                        .ThenInclude(h => h.TipoHabitacion)
+                .Where(r => r.Activo
+                    && r.EstadoId == 2  // Confirmada
+                    && r.FechaIngreso.Date == today)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Codigo,
+                    r.ClienteId,
+                    NombreCliente = r.Cliente.Nombre + " " + r.Cliente.Apellido,
+                    r.FechaIngreso,
+                    r.LlegadaEstimada,
+                    CantidadHabitaciones = r.Detalles.Count,
+                    Habitaciones = r.Detalles.Select(d => new
+                    {
+                        NumeroHabitacion = d.Habitacion.NumeroHabitacion,
+                        TipoHabitacionId = d.Habitacion.TipoHabitacionId,
+                        TipoHabitacionNombre = d.Habitacion.TipoHabitacion.Nombre
+                    }).ToList()
+                })
+                .OrderBy(r => r.LlegadaEstimada)
+                .ToListAsync();
+
+            return Ok(checkInsPendientes);
+        }
+
+        [HttpGet("checkouts-pendientes")]
+        public async Task<IActionResult> GetCheckOutsPendientes()
+        {
+            var today = DateTime.Today;
+
+            var checkOutsPendientes = await _context.Reserva
+                .Include(r => r.Cliente)
+                .Include(r => r.Detalles)
+                    .ThenInclude(d => d.Habitacion)
+                        .ThenInclude(h => h.TipoHabitacion)
+                .Where(r => r.Activo
+                    && r.EstadoId == 4  // Check-in
+                    && r.FechaSalida.Date == today)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Codigo,
+                    r.ClienteId,
+                    NombreCliente = r.Cliente.Nombre + " " + r.Cliente.Apellido,
+                    r.FechaSalida,
+                    CantidadHabitaciones = r.Detalles.Count,
+                    Habitaciones = r.Detalles.Select(d => new
+                    {
+                        NumeroHabitacion = d.Habitacion.NumeroHabitacion,
+                        TipoHabitacionId = d.Habitacion.TipoHabitacionId,
+                        TipoHabitacionNombre = d.Habitacion.TipoHabitacion.Nombre
+                    }).ToList()
+                })
+                .OrderBy(r => r.FechaSalida)
+                .ToListAsync();
+
+            return Ok(checkOutsPendientes);
         }
 
         // GET: api/Reservas/{idReserva}/checkoutdata
@@ -601,6 +762,20 @@ namespace HotelApi.Controllers
                 else
                     throw;
             }
+            //Console.WriteLine("clienteid", res.ClienteId);
+            var cliente = await _context.Cliente.FindAsync(res.ClienteId);
+            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
+            {
+                var nombreCliente = cliente.Nombre + " " + cliente.Apellido;
+                try
+                {
+                    EnviarEmailRechazo(nombreCliente, cliente.Email);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al enviar el email: {ex.Message}"); 
+                }
+            }
 
             return NoContent();
         }
@@ -715,7 +890,8 @@ namespace HotelApi.Controllers
 
                     var habitaciones = await _context.Habitacion
                     .Include(h => h.TipoHabitacion)
-                    .Where(h => h.TipoHabitacionId == detalle.TipoHabitacionId &&
+                    .Where(h => h.Activo && 
+                                h.TipoHabitacionId == detalle.TipoHabitacionId &&
                                 h.TipoHabitacion.MaximaOcupacion >= capacidadRequerida)
                     .ToListAsync();
 
@@ -780,6 +956,7 @@ namespace HotelApi.Controllers
                 LlegadaEstimada = re.LlegadaEstimada,
                 Comentarios = re.Comentarios,
                 EstadoId = re.EstadoId,
+                Creacion = re.Creacion,
                 Detalles = re.Detalles?.Select(d => new DetalleReservaDTO
                 {
                     Id = d.Id,
@@ -808,6 +985,7 @@ namespace HotelApi.Controllers
             };
         }
 
+        // correo de confirmacion
         private static string GenerarCuerpoCorreo(ReservaDTO reserva, string nombreCliente, string codigo)
         {
             var detallesHtml = string.Join("", reserva.Detalles.Select(d =>
@@ -848,8 +1026,29 @@ namespace HotelApi.Controllers
                         {detallesHtml}
                     </tbody>
                 </table>
-                <p>Si desea cancelar su reserva, puede acceder a ella usando <a href=""https://tusitio.com/reservas/cancelar/{reserva.Codigo}"">este enlace</a>.</p>
+                <p>Si desea cancelar su reserva, puede acceder a ella usando <a href=""http://localhost:5173/reservas/{reserva.Id}"">este enlace</a>.</p>
                 <p style='margin-top: 20px;'>Nos encantará recibirle pronto. Si tiene alguna duda o desea modificar su reserva, no dude en contactarnos.</p>
+
+                <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>
+            </body>
+            </html>";
+        }
+
+
+
+        // cuerpo correo de rechazo
+        private static string GenerarCuerpoCorreoRechazo(string nombreCliente)
+        {
+            return $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <h2 style='color: #c0392b;'>Reserva No Confirmada</h2>
+                <p>Estimado/a <strong>{nombreCliente}</strong>,</p>
+                <p>Lamentamos informarle que su solicitud de reserva en <strong>Hotel Los Álamos no ha podido ser confirmada.</p>
+        
+                <p>Le pedimos disculpas por los inconvenientes que esto pudiera ocasionarle.</p>
+        
+                <p>Si desea realizar una nueva solicitud o necesita asistencia adicional, no dude en ponerse en contacto con nosotros.</p>
 
                 <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>
             </body>
@@ -894,9 +1093,51 @@ namespace HotelApi.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine("Error enviando email: " + ex.Message);
-                // Aquí puedes agregar logging o manejar la excepción como prefieras
             }
         }
+
+        // enviar email rechazo
+        private static void EnviarEmailRechazo(string nombreCliente, string emailDestino)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("hotellosalamospy@gmail.com", "Hotel Los Alamos");
+
+              
+                var toAddress = new MailAddress(emailDestino);
+                const string fromPassword = "qnacddvmoiwxpfkl";
+
+                string subject = "Confirmación de Reserva";
+
+                string body = GenerarCuerpoCorreoRechazo(nombreCliente);
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando email: " + ex.Message);
+
+            }
+        }
+
     }
 }
 

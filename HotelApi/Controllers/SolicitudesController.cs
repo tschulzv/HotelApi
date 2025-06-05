@@ -64,6 +64,19 @@ namespace HotelApi.Controllers
             return ToDTO(solicitud);
         }
 
+        // GET: api/Solicitudes/unread 
+        // devuelve true o false segun existan o no notificaciones sin leer
+        [HttpGet("unread")]
+        public async Task<ActionResult<object>> GetUnreadSolicitudes()
+        {
+            // Contamos solicitudes activas que aun no estan leidas
+            var unreadCount = await _context.Solicitud
+                .Where(s => s.Activo && !s.EsLeida) 
+                .CountAsync();
+
+            return Ok(new { unreadCount });
+        }
+
         // PUT: api/Solicitudes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -165,7 +178,8 @@ namespace HotelApi.Controllers
                 Tipo = solDTO.Tipo,
                 Creacion = DateTime.Now,
                 Actualizacion = DateTime.Now,
-                Activo = true
+                Activo = true,
+                Motivo = solDTO.Motivo
             };
             _context.Solicitud.Add(solicitud);
             await _context.SaveChangesAsync();
