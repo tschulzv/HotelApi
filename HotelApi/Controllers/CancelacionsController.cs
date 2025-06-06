@@ -28,7 +28,11 @@ namespace HotelApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CancelacionDTO>>> GetCancelacion()
         {
-            var cancelaciones = await _context.Cancelacion.Where(c => c.Activo).Include(c => c.Reserva).ToListAsync();
+            var cancelaciones = await _context.Cancelacion
+                .Where(c => c.Activo)
+                .Include(c => c.Reserva)
+                    .ThenInclude(r => r.Cliente) //agregue esto
+                .ToListAsync();
             var cancelacionDTOs = cancelaciones.Select(ca => ToDTO(ca));
             return Ok(cancelacionDTOs);
         }
@@ -37,7 +41,11 @@ namespace HotelApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CancelacionDTO>> GetCancelacion(int id)
         {
-            var cancelacion = await _context.Cancelacion.Where(c => c.Activo && c.Id == id).Include(c => c.Reserva).FirstOrDefaultAsync();
+            var cancelacion = await _context.Cancelacion
+                .Where(c => c.Activo && c.Id == id)
+                .Include(c => c.Reserva)
+                    .ThenInclude(r => r.Cliente) // agregue esto
+                .FirstOrDefaultAsync();
 
             if (cancelacion == null)
             {
