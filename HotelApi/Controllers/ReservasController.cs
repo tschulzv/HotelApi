@@ -1145,8 +1145,3 @@ namespace HotelApi.Controllers
 
     }
 }
-
-    
-
-
-// qnac ddvm oiwx pfkl

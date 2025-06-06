@@ -9,6 +9,8 @@ using HotelApi.Data;
 using HotelApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using HotelApi.DTOs;
+using System.Net.Mail;
+using System.Net;
 
 namespace HotelApi.Controllers
 {
@@ -159,6 +161,22 @@ namespace HotelApi.Controllers
 
                 _context.Cancelacion.Add(cancelacion);
                 await _context.SaveChangesAsync();
+
+                // Enviar email de confirmación
+                var cliente = await _context.Cliente.FindAsync(reserva.ClienteId);
+                if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Email))
+                {
+                    var nombreCliente = cliente.Nombre + " " + cliente.Apellido;
+                    try
+                    {
+                        EnviarEmailConfirmacion(nombreCliente, cliente.Email, reserva.Codigo);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error al enviar el email: {ex.Message}");
+                    }
+                }
+
                 await transaction.CommitAsync();
 
                 return CreatedAtAction("GetCancelacion", new { id = cancelacion.Id }, ToDTO(cancelacion));
@@ -223,5 +241,67 @@ namespace HotelApi.Controllers
                 DetalleReservaIds = ca.DetalleReservaIds
             };
         }
+
+        // cuerpo correo de rechazo
+        private static string GenerarCuerpoCorreo(string nombreCliente, string codigo)
+        {
+            return $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <h2 style='color: #27ae60;'>Cancelación Recibida</h2>
+                <p>Estimado/a <strong>{nombreCliente}</strong>,</p>
+                <p>Le confirmamos que hemos recibido su solicitud de cancelación de su reserva con código {codigo} en <strong>Hotel Los Álamos</strong>.</p>
+
+                <p>Lamentamos que no pueda acompañarnos en esta ocasión, pero esperamos poder recibirle en una próxima oportunidad.</p>
+
+                <p>Si tiene alguna duda o requiere más información, no dude en contactarnos. Estamos a su disposición para asistirle.</p>
+
+                <p>Saludos cordiales,<br><strong>Hotel Los Álamos</strong></p>
+            </body>
+            </html>";
+        }
+
+
+        private static void EnviarEmailConfirmacion(string nombreCliente, string emailDestino, string codigo)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("hotellosalamospy@gmail.com", "Hotel Los Alamos");
+
+                //var toAddress = new MailAddress(emailDestino);
+                var toAddress = new MailAddress(emailDestino);
+                const string fromPassword = "qnacddvmoiwxpfkl";
+
+                string subject = "Cancelación de Reserva";
+
+                string body = GenerarCuerpoCorreo(nombreCliente, codigo);
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando email: " + ex.Message);
+            }
+        }
+
+
     }
 }
