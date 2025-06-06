@@ -151,6 +151,13 @@ namespace HotelApi.Controllers
 
                         cancelacion.DetalleReservaIds.Add(detalleId);
                     }
+                    // si ya no quedan detalles activos, cancelar toda la reserva
+                    var detallesActivosRestantes = reserva.Detalles.Count(d => d.Activo);
+                    if (detallesActivosRestantes == 0)
+                    {
+                        reserva.EstadoId = 3; // Asumimos que EstadoId 3 = Cancelada
+                        reserva.Actualizacion = DateTime.Now;
+                    }
                 }
                 else
                 {
