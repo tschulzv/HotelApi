@@ -246,14 +246,15 @@ namespace HotelApi.Controllers
         {
             var today = DateTime.Today;
 
-            var checkInsPendientes = await _context.Reserva
+            var checkInsPendientes = _context.Reserva
                 .Include(r => r.Cliente)
                 .Include(r => r.Detalles)
                     .ThenInclude(d => d.Habitacion)
                         .ThenInclude(h => h.TipoHabitacion)
                 .Where(r => r.Activo
-                    && r.EstadoId == 2  // Confirmada
+                    && r.EstadoId == 2
                     && r.FechaIngreso.Date == today)
+                .AsEnumerable() // 👈 Cambia a LINQ to Objects desde aquí
                 .Select(r => new
                 {
                     r.Id,
@@ -265,13 +266,13 @@ namespace HotelApi.Controllers
                     CantidadHabitaciones = r.Detalles.Count,
                     Habitaciones = r.Detalles.Select(d => new
                     {
-                        NumeroHabitacion = d.Habitacion.NumeroHabitacion,
-                        TipoHabitacionId = d.Habitacion.TipoHabitacionId,
-                        TipoHabitacionNombre = d.Habitacion.TipoHabitacion.Nombre
+                        NumeroHabitacion = d.Habitacion?.NumeroHabitacion ?? 0,
+                        TipoHabitacionId = d.Habitacion?.TipoHabitacionId ?? 0,
+                        TipoHabitacionNombre = d.Habitacion?.TipoHabitacion?.Nombre ?? "Desconocida"
                     }).ToList()
                 })
                 .OrderBy(r => r.LlegadaEstimada)
-                .ToListAsync();
+                .ToList();
 
             return Ok(checkInsPendientes);
         }
