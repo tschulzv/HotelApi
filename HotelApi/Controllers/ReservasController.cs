@@ -264,7 +264,8 @@ namespace HotelApi.Controllers
                     r.FechaIngreso,
                     r.LlegadaEstimada,
                     CantidadHabitaciones = r.Detalles.Count,
-                    Habitaciones = r.Detalles.Select(d => new
+                    Habitaciones = r.Detalles.Where(d=>d.Activo)
+                    .Select(d => new
                     {
                         NumeroHabitacion = d.Habitacion?.NumeroHabitacion ?? 0,
                         TipoHabitacionId = d.Habitacion?.TipoHabitacionId ?? 0,
